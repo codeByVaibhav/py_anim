@@ -31,7 +31,7 @@ class StartScene(Scene):
             RotateFrame(
                 VEC3_X_AXIS + VEC3_Z_AXIS, 360,
                 self.get_objs_frame(sphere),
-                speed=0.001
+                speed=0.008
             ),
         )
 
