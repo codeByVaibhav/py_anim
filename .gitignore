@@ -1,0 +1,6 @@
+.vscode/
+*.svg
+out/*
+frames/*
+*/__pycache__
+*/*/__pycache__
