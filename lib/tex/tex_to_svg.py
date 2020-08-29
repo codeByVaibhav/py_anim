@@ -2,6 +2,7 @@ import os
 import hashlib
 from lib.file.constants import *
 
+
 def tex_hash(expression, template_tex_file_body):
     id_str = str(expression + template_tex_file_body)
     hasher = hashlib.sha256()

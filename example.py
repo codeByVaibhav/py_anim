@@ -19,15 +19,15 @@ class StartScene(Scene):
         super().__init__(width=width, height=height, fps=fps)
 
     def begin(self):
-        self.camera.pos = vector(0, 0, 4)
+        self.camera.pos = vector(0, 0, 8)
 
-        # text = TexText('Hello world', mat=Material(
-        #     stroke=DARK_BLUE, stroke_width=4))
-
+        text = TexText('Hello World', mat=Material(
+            stroke=DARK_BLUE, stroke_width=4))
         sphere = Cuboid(1, 1, 1)
 
         self.render(
-            ShowCreation(sphere),
+            ShowCreation(text),
+            MorphShape(text, sphere),
             RotateFrame(
                 VEC3_X_AXIS + VEC3_Z_AXIS, 360,
                 self.get_objs_frame(sphere),
