@@ -31,27 +31,19 @@ def generate_tex_file(expression, template_tex_file_body):
 
 
 def tex_to_dvi(tex_file):
-    result = tex_file.replace(".tex", ".dvi" if not TEX_USE_CTEX else ".xdv")
+    result = tex_file.replace(".tex", ".dvi")
     if not os.path.exists(result):
         commands = [
             "latex",
             "-interaction=batchmode",
             "-halt-on-error",
-            "-output-directory=\"{}\"".format(TEX_DIR),
-            "\"{}\"".format(tex_file),
-            ">",
-            os.devnull
-        ] if not TEX_USE_CTEX else [
-            "xelatex",
-            "-no-pdf",
-            "-interaction=batchmode",
-            "-halt-on-error",
-            "-output-directory=\"{}\"".format(TEX_DIR),
-            "\"{}\"".format(tex_file),
+            f'"{tex_file}"',
+            f'-output-directory="{TEX_DIR}"',
             ">",
             os.devnull
         ]
-        exit_code = os.system(" ".join(commands))
+        command = " ".join(commands)
+        exit_code = os.system(command)
         if exit_code != 0:
             log_file = tex_file.replace(".tex", ".log")
             raise Exception(
@@ -72,16 +64,17 @@ def dvi_to_svg(dvi_file, regen_if_exists=False):
     if not os.path.exists(result):
         commands = [
             "dvisvgm",
-            "\"{}\"".format(dvi_file),
+            f'"{dvi_file}"',
             "-n",
             "-v",
             "0",
             "-o",
-            "\"{}\"".format(result),
+            f'"{result}"',
             ">",
             os.devnull
         ]
-        os.system(" ".join(commands))
+        command = " ".join(commands)
+        os.system(command)
     return result
 
 

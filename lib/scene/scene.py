@@ -3,6 +3,10 @@ from itertools import count
 import copy
 from tqdm import tqdm
 
+import cairo
+
+import subprocess
+
 from lib.material.material import *
 from lib.math.vector import *
 from lib.math.quaternion import *
@@ -28,16 +32,15 @@ class Camera(object):
         self.aspect_ratio = height / width
         self.fov = np.pi / 2
         self.fov_rad = 1.0 / math.tan(self.fov / 2)
-        self.near = 0.01
-        self.far = 1000
+        self.near = 0.0001
+        self.far = 100000
 
-        self.proj_mat = np.array(
-            [[self.aspect_ratio / self.fov_rad, 0,            0,                                                0],
-             [0,                                self.fov_rad,
-                 0,                                                0],
-             [0,                                0,            self.far /
-                 (self.far - self.near),                1],
-             [0,                                0,            (-self.far * self.near) / (self.far - self.near), 0]],
+        self.proj_mat = np.array([
+            [self.aspect_ratio / self.fov_rad, 0, 0, 0],
+            [0, self.fov_rad, 0, 0],
+            [0, 0, self.far / (self.far - self.near), 1],
+            [0, 0, (-self.far * self.near) / (self.far - self.near), 0]
+        ],
             dtype=np.float64
         )
 
@@ -58,11 +61,11 @@ class Camera(object):
 
 class Scene(object):
     def __init__(
-        self,
-        width=1920,
-        height=1080,
-        fps=24,
-        **kwargs
+            self,
+            width=1920,
+            height=1080,
+            fps=24,
+            **kwargs
     ):
         self.unit_time = 1 / fps
         self.fps = fps
@@ -76,7 +79,6 @@ class Scene(object):
         self.background_frame = []
 
         self.begin()
-        self.process_all_frames()
         self.end()
 
     def begin(self):
@@ -84,8 +86,13 @@ class Scene(object):
         This function starts the scene.
         Should be implemented by child object.
         '''
+        pass
 
-    def render(self, *animations, merged=False, merged_stay_equal=False, get_frames_without_background=False, sort_frames=False):
+    def clear_background(self):
+        self.background_frame = []
+
+    def render(self, *animations, merged=False, merged_stay_equal=False, get_frames_without_background=False,
+               sort_frames=False):
         all_frames = []
         for animation in animations:
             frames = animation.progress()
@@ -188,39 +195,26 @@ class Scene(object):
         d = 'M' + "".join(f'L{i[0]} {i[1]}' for i in path)[1:]
         return f'<path d="{d}" {mat}/>'
 
-    def process_all_frames(self):
-        print('Processing all Frames.')
-        for frame in tqdm(self.frames):
-            svg_paths = []
-            for mat, path in frame:
-                proj_path = self.camera.get_projected_path(path)
-                svg_path = self.get_svg_path(proj_path, mat=mat)
-                svg_paths.append(svg_path)
-
-            self.svg_frames.append(
-                self.svg_header + '\n'.join(svg_paths) + self.svg_end
-            )
-        # self.svg_frames = procees_all_frames_in_parallel(self.frames[:], self.camera.copy(), get_svg_path)
-
     def end(self):
-        frame_counter = count(1)
-        svg_to_png_commands = []
-        print('Writing all Frames to disk.')
-        for frame in tqdm(self.svg_frames):
-            # print(frame)
-            frame_no = next(frame_counter)
+        print('Processing all Frames.')
+        for i, frame in enumerate(tqdm(self.frames)):
+            svg_paths = [
+                self.get_svg_path(
+                    self.camera.get_projected_path(path),
+                    mat=mat
+                ) for mat, path in frame
+            ]
 
-            write_svg(FRAMES_DIR + f"\\{frame_no}.svg", frame)
+            svg_frame = self.svg_header + '\n'.join(svg_paths) + self.svg_end
+            # write_svg(FRAMES_DIR + f"\\{frame_no}.svg", frame)
+            png_file = FRAMES_DIR + f"\\{i + 1}.png"
+            svg2png(svg_frame, write_to=png_file)
 
-            png_file = FRAMES_DIR + f"\\{frame_no}.png"
-            svg2png(frame, write_to=png_file)
-
-        cmd = f'ffmpeg -i {FRAMES_DIR}\\%0d.png -c:v libx264 -vf fps={self.fps} -threads 16 -pix_fmt yuv420p {VIDEO_DIR}\\out.mp4'
+        # -hide_banner -nostats -loglevel 0
+        cmd = f'ffmpeg -y -vsync 0 -hwaccel cuda -hwaccel_output_format cuda -i {FRAMES_DIR}\\%0d.png -c:v h264_nvenc -vf fps={self.fps} -threads 16 -pix_fmt yuv420p -b:v 15M {VIDEO_DIR}\\out.mp4'
+        # subprocess.Popen(cmd, stdin=subprocess.PIPE)
         os.system(cmd)
         os.system(f'{VIDEO_DIR}\\out.mp4')
-
-    def copy(self):
-        return deepcopy(self)
 
 
 def write_svg(file, frame):

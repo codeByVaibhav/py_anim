@@ -3,16 +3,18 @@ from lib.math.vector import *
 from lib.math.interpolation import lerp
 from copy import deepcopy
 
+
 class Material(object):
     all_styles = ["fill", "stroke", "stroke_width", "stroke_dasharray", "fill_opacity", "stroke_opacity"]
+
     def __init__(
         self,
-        fill = BLACK,
-        stroke = ORANGE,
-        stroke_width = 2,
-        stroke_dasharray = VEC2_ZERO,
-        fill_opacity = 0.0,
-        stroke_opacity = 1.0
+        fill=BLACK,
+        stroke=ORANGE,
+        stroke_width=2,
+        stroke_dasharray=VEC2_ZERO,
+        fill_opacity=0.0,
+        stroke_opacity=1.0
     ):
         self.fill = fill
         self.stroke = stroke
@@ -22,7 +24,7 @@ class Material(object):
         self.stroke_opacity = stroke_opacity
 
     def __str__(self):
-        mat_str  = f'stroke="rgb({self.stroke[0]}, {self.stroke[1]}, {self.stroke[2]})" '
+        mat_str = f'stroke="rgb({self.stroke[0]}, {self.stroke[1]}, {self.stroke[2]})" '
         mat_str += f'fill="rgb({self.fill[0]}, {self.fill[1]}, {self.fill[2]})" '
         mat_str += f'fill-opacity="{self.fill_opacity}" '
         mat_str += f'stroke-opacity="{self.stroke_opacity}" '
@@ -45,17 +47,18 @@ class Material(object):
         elif percentage >= 1:
             return o.copy()
         else:
-            fill             = lerp(self.fill, o.fill, percentage)
-            stroke           = lerp(self.stroke, o.stroke, percentage)
+            fill = lerp(self.fill, o.fill, percentage)
+            stroke = lerp(self.stroke, o.stroke, percentage)
             stroke_dasharray = lerp(self.stroke_dasharray, o.stroke_dasharray, percentage)
 
-            fill_opacity   = lerp(self.fill_opacity,   o.fill_opacity,   percentage)
+            fill_opacity = lerp(self.fill_opacity, o.fill_opacity, percentage)
             stroke_opacity = lerp(self.stroke_opacity, o.stroke_opacity, percentage)
-            stroke_width   = lerp(self.stroke_width,   o.stroke_width,   percentage)
-            
+            stroke_width = lerp(self.stroke_width, o.stroke_width, percentage)
+
         return Material(
-                fill=fill, fill_opacity=fill_opacity, stroke=stroke, stroke_opacity=stroke_opacity,
-                stroke_dasharray=stroke_dasharray, stroke_width=stroke_width
-            )
+            fill=fill, fill_opacity=fill_opacity, stroke=stroke, stroke_opacity=stroke_opacity,
+            stroke_dasharray=stroke_dasharray, stroke_width=stroke_width
+        )
+
 
 DEFAUT_MAT = Material()

@@ -3,10 +3,11 @@ from lib.scene_obj.scene_obj import *
 from lib.tex.svg_parser import *
 from lib.math.interpolation import lerp
 
+
 class TexText(SceneObj):
-    def __init__(self, Text, **kwargs):
+    def __init__(self, text, **kwargs):
         super().__init__(**kwargs)
-        self.svg_file = tex_to_svg_file(Text)
+        self.svg_file = tex_to_svg_file(text)
         parsed_svg = SvgParser(self.svg_file)
         self.paths = parsed_svg.paths
         self.top_left = parsed_svg.top_left
@@ -20,7 +21,6 @@ class TexText(SceneObj):
         return (
             self.mat,
             [
-                [ (self.rot.rotate(p) + pos) * self.scale for p in path ] for path in self.paths
+                [(self.rot.rotate(p) + pos) * self.scale for p in path] for path in self.paths
             ]
         )
-

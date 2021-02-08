@@ -4,13 +4,10 @@ from lib.tex.svg_parser import *
 from lib.math.interpolation import lerp
 from lib.file.constants import TEX_USE_CTEX
 
-eq_temp = '\\[TextToReplace\\]'
-
 class TexEquation(SceneObj):
-    def __init__(self, Equation, **kwargs):
+    def __init__(self, equation, **kwargs):
         super().__init__(**kwargs)
-        Equation = eq_temp.replace('TextToReplace', Equation)
-        self.svg_file = tex_to_svg_file(Equation)
+        self.svg_file = tex_to_svg_file(equation)
         parsed_svg = SvgParser(self.svg_file)
         self.paths = parsed_svg.paths
         self.top_left = parsed_svg.top_left

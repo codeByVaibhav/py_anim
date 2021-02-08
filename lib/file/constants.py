@@ -36,7 +36,6 @@ SVG_TEMP_TXT = f.read()
 f.close()
 # endregion
 
-
 # region Video
 FRAMES_DIR = ".\\frames\\" + START_TIME
 VIDEO_DIR = ".\\out\\" + START_TIME
