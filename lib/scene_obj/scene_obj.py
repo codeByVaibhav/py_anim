@@ -1,16 +1,16 @@
-from lib.math.vector import *
-from lib.math.quaternion import *
-from lib.material.material import *
 from copy import deepcopy
+
+from lib.material.material import *
+from lib.math.quaternion import *
 
 
 class SceneObj(object):
     def __init__(
-        self,
-        pos=VEC3_ZERO,
-        rot=QUAT_IDEN,
-        scale=VEC3_NSCALE,
-        mat=DEFAUT_MAT
+            self,
+            pos=VEC3_ZERO,
+            rot=QUAT_IDEN,
+            scale=VEC3_NSCALE,
+            mat=DEFAUT_MAT
     ):
         self.pos = pos
         self.rot = rot

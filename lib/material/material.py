@@ -1,20 +1,21 @@
-from lib.material.color import *
-from lib.math.vector import *
-from lib.math.interpolation import lerp
 from copy import deepcopy
+
+from lib.material.color import *
+from lib.math.interpolation import lerp
+from lib.math.vector import *
 
 
 class Material(object):
     all_styles = ["fill", "stroke", "stroke_width", "stroke_dasharray", "fill_opacity", "stroke_opacity"]
 
     def __init__(
-        self,
-        fill=BLACK,
-        stroke=ORANGE,
-        stroke_width=2,
-        stroke_dasharray=VEC2_ZERO,
-        fill_opacity=0.0,
-        stroke_opacity=1.0
+            self,
+            fill=BLACK,
+            stroke=ORANGE,
+            stroke_width=2,
+            stroke_dasharray=VEC2_ZERO,
+            fill_opacity=0.0,
+            stroke_opacity=1.0
     ):
         self.fill = fill
         self.stroke = stroke

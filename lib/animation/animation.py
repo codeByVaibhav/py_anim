@@ -1,4 +1,3 @@
-from copy import deepcopy
 from lib.material.material import *
 from lib.math.interpolation import *
 from lib.math.path import *
@@ -56,9 +55,9 @@ class MorphShape(Animation):
 
 class ShowCreation(Animation):
     def __init__(
-        self,
-        obj,
-        speed=0.0625
+            self,
+            obj,
+            speed=0.0625
     ):
         super().__init__()
         self.speed = speed
@@ -77,7 +76,7 @@ class ShowCreation(Animation):
         while per - alpha <= 1:
             per += self.speed
 
-            frame = [(mat, lerp_path(path, smooth(per - (i/50))))
+            frame = [(mat, lerp_path(path, smooth(per - (i / 50))))
                      for i, path in enumerate(paths)]
 
             final_frames.append(frame)
@@ -85,7 +84,7 @@ class ShowCreation(Animation):
         if final_mat.fill_opacity != 0:
             per = -self.speed
             while per <= 1:
-                per += self.speed*2
+                per += self.speed * 2
                 nper = smooth(per)
 
                 frame = [(mat.lerp(final_mat, nper), path) for path in paths]

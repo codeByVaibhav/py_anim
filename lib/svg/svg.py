@@ -1,6 +1,6 @@
-from lib.tex.tex_to_svg import tex_to_svg_file
 from lib.scene_obj.scene_obj import *
 from lib.svg.parser import *
+
 
 class Svg(SceneObj):
     def __init__(self, svg_file, **kwargs):
@@ -18,7 +18,6 @@ class Svg(SceneObj):
         return (
             self.mat,
             [
-                [ (self.rot.rotate(p) + pos) * self.scale for p in path ] for path in self.paths
+                [(self.rot.rotate(p) + pos) * self.scale for p in path] for path in self.paths
             ]
         )
-

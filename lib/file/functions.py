@@ -1,4 +1,6 @@
 import subprocess
+
+
 def parallel_command(commands, n_threads=8):
     '''
     Takes list of console commands and exucute them in parallel

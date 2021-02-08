@@ -1,5 +1,6 @@
 import re
 from xml.dom import minidom
+
 from lib.geometry.curves import *
 from lib.math.vector import *
 
@@ -80,7 +81,7 @@ class Parser(object):
                     x, y = self.str_to_float(*ppoints.split(' ')[-2:])
                     rx, ry, angle_x_axis, large_arc_flag, sweep_flag, ex, ey = self.str_to_float(*points.split(' '))
                     new_all_path[i][j] = (
-                    'A', f'{rx + x} {ry + y} {angle_x_axis} {large_arc_flag} {sweep_flag} {ex + x} {ey + y}')
+                        'A', f'{rx + x} {ry + y} {angle_x_axis} {large_arc_flag} {sweep_flag} {ex + x} {ey + y}')
 
         return new_all_path
 

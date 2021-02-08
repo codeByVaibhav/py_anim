@@ -1,5 +1,6 @@
 import re
 from xml.dom import minidom
+
 from lib.geometry.curves import *
 from lib.math.vector import *
 

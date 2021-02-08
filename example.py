@@ -1,16 +1,14 @@
-import concurrent.futures
-from lib.scene.scene import *
-from lib.math.vector import *
-from lib.material.color import *
-from lib.geometry.shapes import *
 from lib.animation.animation import *
-from lib.tex.equation import *
+from lib.geometry.shapes import *
+from lib.scene.scene import *
 from lib.tex.text import *
+
+
 # import mpmath
 
 
 def complex_func(vec, inp=2):
-    comp = complex(vec.x(), vec.y())**inp
+    comp = complex(vec.x(), vec.y()) ** inp
     return vector(comp.real, comp.imag, 0)
 
 
@@ -29,14 +27,14 @@ class StartScene(Scene):
         #     stroke=DARK_BLUE, stroke_width=8))
 
         grid = NumberPlane(
-                -7, 7, -5, 5,
-                mat=Material(stroke=DARK_BLUE)
-            )
+            -7, 7, -5, 5,
+            mat=Material(stroke=DARK_BLUE)
+        )
 
         circle = Circle(mat=Material(stroke=ORANGE, stroke_width=8))
         square = Rectangle(mat=Material(stroke=RED_D, stroke_width=8))
         line = Line(
-            start=VEC3_LEFT*10, end=VEC3_RIGHT*10,
+            start=VEC3_LEFT * 10, end=VEC3_RIGHT * 10,
             mat=Material(stroke=PURPLE_A, stroke_width=8)
         )
 

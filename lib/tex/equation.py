@@ -1,8 +1,8 @@
-from lib.tex.tex_to_svg import tex_to_svg_file
+from lib.math.interpolation import lerp
 from lib.scene_obj.scene_obj import *
 from lib.tex.svg_parser import *
-from lib.math.interpolation import lerp
-from lib.file.constants import TEX_USE_CTEX
+from lib.tex.tex_to_svg import tex_to_svg_file
+
 
 class TexEquation(SceneObj):
     def __init__(self, equation, **kwargs):
@@ -21,7 +21,6 @@ class TexEquation(SceneObj):
         return (
             self.mat,
             [
-                [ (self.rot.rotate(p) + pos) * self.scale for p in path ] for path in self.paths
+                [(self.rot.rotate(p) + pos) * self.scale for p in path] for path in self.paths
             ]
         )
-

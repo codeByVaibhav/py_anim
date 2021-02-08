@@ -24,7 +24,7 @@ def get_equal_len_paths(spaths, epaths):
 def path_linspace(path, no_of_points=200):
     if len(path) == no_of_points:
         return path
-    return [lerp_path(path, 1/no_of_points*n)[-1] for n in range(no_of_points+1)]
+    return [lerp_path(path, 1 / no_of_points * n)[-1] for n in range(no_of_points + 1)]
 
 
 def lerp_path(path, per):
@@ -33,7 +33,7 @@ def lerp_path(path, per):
     if per >= 1:
         return path
 
-    per *= len(path)-1
+    per *= len(path) - 1
 
     last_point = int(per)
     new_per = per - last_point

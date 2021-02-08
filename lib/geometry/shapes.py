@@ -1,11 +1,12 @@
-from lib.scene_obj.scene_obj import *
-from lib.material.color import *
-from lib.math.vector import *
-from lib.math.constants import *
-from lib.math.path import path_linspace
-from lib.math.interpolation import lerp
-from itertools import count
 from copy import deepcopy
+from itertools import count
+
+from lib.math.constants import *
+from lib.math.interpolation import lerp
+from lib.math.path import path_linspace
+from lib.math.vector import *
+from lib.scene_obj.scene_obj import *
+
 
 class Line(SceneObj):
     def __init__(self, start=VEC3_ZERO, end=VEC3_X_AXIS, **kwargs):
@@ -15,7 +16,7 @@ class Line(SceneObj):
 
     def get_mat_and_paths(self):
         start = (self.rot.rotate(self.start) + self.pos) * self.scale
-        end   = (self.rot.rotate(self.end)   + self.pos) * self.scale
+        end = (self.rot.rotate(self.end) + self.pos) * self.scale
         return (
             self.mat,
             [
@@ -23,20 +24,21 @@ class Line(SceneObj):
             ]
         )
 
+
 class Rectangle(SceneObj):
     def __init__(self, width=1, height=1, **kwargs):
         super().__init__(**kwargs)
 
-        self.lup    = VEC3_LEFT  * width + VEC3_UP   * height
-        self.rup    = VEC3_RIGHT * width + VEC3_UP   * height
-        self.rdown  = VEC3_RIGHT * width + VEC3_DOWN * height
-        self.ldown  = VEC3_LEFT  * width + VEC3_DOWN * height
-        self.width  = width
+        self.lup = VEC3_LEFT * width + VEC3_UP * height
+        self.rup = VEC3_RIGHT * width + VEC3_UP * height
+        self.rdown = VEC3_RIGHT * width + VEC3_DOWN * height
+        self.ldown = VEC3_LEFT * width + VEC3_DOWN * height
+        self.width = width
         self.height = height
 
     def get_mat_and_paths(self):
-        lup   = (self.rot.rotate(self.lup)   + self.pos) * self.scale
-        rup   = (self.rot.rotate(self.rup)   + self.pos) * self.scale
+        lup = (self.rot.rotate(self.lup) + self.pos) * self.scale
+        rup = (self.rot.rotate(self.rup) + self.pos) * self.scale
         rdown = (self.rot.rotate(self.rdown) + self.pos) * self.scale
         ldown = (self.rot.rotate(self.ldown) + self.pos) * self.scale
         return (
@@ -45,7 +47,8 @@ class Rectangle(SceneObj):
                 [rdown, rup, lup, ldown, rdown]
             ]
         )
-    
+
+
 class Circle(SceneObj):
     def __init__(self, start=0, end=TAU, radius=1, step=0.06981317007977318, **kwargs):
         super().__init__(**kwargs)
@@ -55,12 +58,12 @@ class Circle(SceneObj):
         self.step = step
         self.path = []
         self.generate_path()
-        
+
     def generate_path(self):
         self.path = []
         theta = count(self.start, step=self.step)
         for a in theta:
-            self.path.append( vector(self.radius * math.cos(a), self.radius * math.sin(a), 0) )
+            self.path.append(vector(self.radius * math.cos(a), self.radius * math.sin(a), 0))
             if a >= self.end:
                 break
 
@@ -68,35 +71,36 @@ class Circle(SceneObj):
         return (
             self.mat,
             [
-                [ (self.rot.rotate(p) + self.pos) * self.scale for p in self.path ]
+                [(self.rot.rotate(p) + self.pos) * self.scale for p in self.path]
             ]
         )
+
 
 # x -> breadth, y -> height, z -> depth
 class Cuboid(SceneObj):
     def __init__(self, breadth, height, depth, **kwargs):
         super().__init__(**kwargs)
-        #Front face
-        self.frd = (VEC3_X_AXIS *  breadth ) - (VEC3_Y_AXIS * height ) + (VEC3_Z_AXIS * depth )
-        self.fru = (VEC3_X_AXIS *  breadth ) + (VEC3_Y_AXIS * height ) + (VEC3_Z_AXIS * depth )
-        self.flu = (VEC3_X_AXIS * -breadth ) + (VEC3_Y_AXIS * height ) + (VEC3_Z_AXIS * depth )
-        self.fld = (VEC3_X_AXIS * -breadth ) - (VEC3_Y_AXIS * height ) + (VEC3_Z_AXIS * depth )
-        #Back face
-        self.brd = (VEC3_X_AXIS *  breadth ) - (VEC3_Y_AXIS * height ) - (VEC3_Z_AXIS * depth )
-        self.bru = (VEC3_X_AXIS *  breadth ) + (VEC3_Y_AXIS * height ) - (VEC3_Z_AXIS * depth )
-        self.blu = (VEC3_X_AXIS * -breadth ) + (VEC3_Y_AXIS * height ) - (VEC3_Z_AXIS * depth )
-        self.bld = (VEC3_X_AXIS * -breadth ) - (VEC3_Y_AXIS * height ) - (VEC3_Z_AXIS * depth )
+        # Front face
+        self.frd = (VEC3_X_AXIS * breadth) - (VEC3_Y_AXIS * height) + (VEC3_Z_AXIS * depth)
+        self.fru = (VEC3_X_AXIS * breadth) + (VEC3_Y_AXIS * height) + (VEC3_Z_AXIS * depth)
+        self.flu = (VEC3_X_AXIS * -breadth) + (VEC3_Y_AXIS * height) + (VEC3_Z_AXIS * depth)
+        self.fld = (VEC3_X_AXIS * -breadth) - (VEC3_Y_AXIS * height) + (VEC3_Z_AXIS * depth)
+        # Back face
+        self.brd = (VEC3_X_AXIS * breadth) - (VEC3_Y_AXIS * height) - (VEC3_Z_AXIS * depth)
+        self.bru = (VEC3_X_AXIS * breadth) + (VEC3_Y_AXIS * height) - (VEC3_Z_AXIS * depth)
+        self.blu = (VEC3_X_AXIS * -breadth) + (VEC3_Y_AXIS * height) - (VEC3_Z_AXIS * depth)
+        self.bld = (VEC3_X_AXIS * -breadth) - (VEC3_Y_AXIS * height) - (VEC3_Z_AXIS * depth)
         self.paths = []
         self.generate_paths()
-    
+
     def generate_paths(self):
         self.paths = []
         front_face = [self.frd, self.fru, self.flu, self.fld, self.frd]
-        left_face  = [self.fld, self.flu, self.blu, self.bld, self.fld]
+        left_face = [self.fld, self.flu, self.blu, self.bld, self.fld]
         right_face = [self.brd, self.bru, self.fru, self.frd, self.brd]
-        up_face    = [self.fru, self.bru, self.blu, self.flu, self.fru]
-        down_face  = [self.brd, self.frd, self.fld, self.bld, self.brd]
-        back_face  = [self.brd, self.bru, self.blu, self.bld, self.brd]
+        up_face = [self.fru, self.bru, self.blu, self.flu, self.fru]
+        down_face = [self.brd, self.frd, self.fld, self.bld, self.brd]
+        back_face = [self.brd, self.bru, self.blu, self.bld, self.brd]
         self.paths.append(front_face)
         self.paths.append(left_face)
         self.paths.append(right_face)
@@ -105,7 +109,6 @@ class Cuboid(SceneObj):
         self.paths.append(back_face)
 
     def get_mat_and_paths(self):
-
         return (
             self.mat,
             [
@@ -113,8 +116,9 @@ class Cuboid(SceneObj):
             ]
         )
 
+
 class LinearFunction(SceneObj):
-    def __init__(self, start, end, func, step=np.pi/90, **kwargs):
+    def __init__(self, start, end, func, step=np.pi / 90, **kwargs):
         super().__init__(**kwargs)
         self.start = start
         self.end = end
@@ -127,7 +131,7 @@ class LinearFunction(SceneObj):
         self.path = []
         x_points = count(self.start, step=self.step)
         for p in x_points:
-            self.path.append( vector(p, self.func(p), 0) )
+            self.path.append(vector(p, self.func(p), 0))
             if p >= self.end:
                 break
 
@@ -135,9 +139,10 @@ class LinearFunction(SceneObj):
         return (
             self.mat,
             [
-                [ (self.rot.rotate(p) + self.pos) * self.scale for p in self.path ]
+                [(self.rot.rotate(p) + self.pos) * self.scale for p in self.path]
             ]
         )
+
 
 class NumberPlane(SceneObj):
     def __init__(self, sx, ex, sy, ey, **kwargs):
@@ -151,13 +156,13 @@ class NumberPlane(SceneObj):
 
         for w in range(self.sx, self.ex + 1):
             ldown = vector(w, self.sy, 0)
-            lup   = vector(w, self.ey, 0)
-            self.paths.append( [lup, ldown] )
+            lup = vector(w, self.ey, 0)
+            self.paths.append([lup, ldown])
 
         for h in range(self.sy, self.ey + 1):
             ldown = vector(self.sx, h, 0)
             rdown = vector(self.ex, h, 0)
-            self.paths.append( [ldown, rdown] )
+            self.paths.append([ldown, rdown])
 
     def split_paths(self, num_splits):
         new_paths = []
@@ -173,6 +178,7 @@ class NumberPlane(SceneObj):
             ]
         )
 
+
 class SplitedNumberPlane(SceneObj):
     def __init__(self, sx, ex, sy, ey, **kwargs):
         super().__init__(**kwargs)
@@ -185,44 +191,44 @@ class SplitedNumberPlane(SceneObj):
         # w is all the y axis
         for w in range(self.sx, 0):
             ldown = vector(w, self.sy, 0)
-            mid   = vector(w, -0.001, 0)
-            self.paths.append( [ldown, mid] )
+            mid = vector(w, -0.001, 0)
+            self.paths.append([ldown, mid])
 
         for w in range(0, self.ex + 1):
             rdown = vector(w, self.sy, 0)
-            mid   = vector(w, -0.001, 0)
-            self.paths.append( [rdown, mid] )
+            mid = vector(w, -0.001, 0)
+            self.paths.append([rdown, mid])
 
         for w in range(self.sx, 0):
             lup = vector(w, self.ey, 0)
             mid = vector(w, 0.001, 0)
-            self.paths.append( [lup, mid] )
+            self.paths.append([lup, mid])
 
         for w in range(0, self.ex + 1):
             rup = vector(w, self.ey, 0)
             mid = vector(w, 0.001, 0)
-            self.paths.append( [rup, mid] )
+            self.paths.append([rup, mid])
 
         # h is all the x axis
         for h in range(self.sy, 0):
             ldown = vector(self.sx, h, 0)
-            mid   = vector(-0.001, h, 0)
-            self.paths.append( [ldown, mid] )
+            mid = vector(-0.001, h, 0)
+            self.paths.append([ldown, mid])
 
         for h in range(0, self.ey + 1):
             rup = vector(self.ex, h, 0)
-            mid   = vector(0.001, h, 0)
-            self.paths.append( [rup, mid] )
+            mid = vector(0.001, h, 0)
+            self.paths.append([rup, mid])
 
         for h in range(self.sy, 0):
             rdown = vector(self.ex, h, 0)
             mid = vector(0.001, h, 0)
-            self.paths.append( [rdown, mid] )
+            self.paths.append([rdown, mid])
 
         for h in range(0, self.ey + 1):
             lup = vector(self.sx, h, 0)
             mid = vector(-0.001, h, 0)
-            self.paths.append( [lup, mid] )
+            self.paths.append([lup, mid])
 
     def get_mat_and_paths(self):
         return (
@@ -232,8 +238,11 @@ class SplitedNumberPlane(SceneObj):
             ]
         )
 
-plus_90_around_z_axis_rot  = Quaternion(VEC3_Z_AXIS,  90)
+
+plus_90_around_z_axis_rot = Quaternion(VEC3_Z_AXIS, 90)
 arrow_head_size = 0.4
+
+
 class Arrow(SceneObj):
     def __init__(self, start=VEC3_ZERO, end=VEC3_X_AXIS, **kwargs):
         super().__init__(**kwargs)
@@ -257,6 +266,7 @@ class Arrow(SceneObj):
             ]
         )
 
+
 class CubicalSphere(SceneObj):
     def __init__(self, radius, subdivision=32, **kwargs):
         super().__init__(**kwargs)
@@ -268,7 +278,7 @@ class CubicalSphere(SceneObj):
     def generate_paths(self):
         self.paths = []
         # Make all the verticies
-        bru = vec_norm(vector(1,1,1)) * self.radius
+        bru = vec_norm(vector(1, 1, 1)) * self.radius
         fld = vec_direction(bru, VEC3_ZERO)
 
         blu = deepcopy(bru)
@@ -298,7 +308,7 @@ class CubicalSphere(SceneObj):
         bl = path_linspace([bld, blu], no_of_points=self.subdivision)
         br = path_linspace([brd, bru], no_of_points=self.subdivision)
 
-        del_per = 1/self.subdivision
+        del_per = 1 / self.subdivision
         per = 0
         while per <= 1:
             mus = [lerp(s, e, per) for s, e in zip(fu, bu)]
@@ -316,26 +326,26 @@ class CubicalSphere(SceneObj):
             mbe = [lerp(s, e, per + del_per) for s, e in zip(bl, br)]
             # up side
             for i, (s, e) in enumerate(list(zip(mus, mue))[:-1]):
-                self.paths += [[s, mus[i+1], mue[i+1], e, s]]
+                self.paths += [[s, mus[i + 1], mue[i + 1], e, s]]
             # down side
             for i, (s, e) in enumerate(list(zip(mds, mde))[:-1]):
-                self.paths += [[s, mds[i+1], mde[i+1], e, s]]
+                self.paths += [[s, mds[i + 1], mde[i + 1], e, s]]
             # left side
             for i, (s, e) in enumerate(list(zip(mls, mle))[:-1]):
-                self.paths += [[s, mls[i+1], mle[i+1], e, s]]
+                self.paths += [[s, mls[i + 1], mle[i + 1], e, s]]
             # right side
             for i, (s, e) in enumerate(list(zip(mrs, mre))[:-1]):
-                self.paths += [[s, mrs[i+1], mre[i+1], e, s]]
+                self.paths += [[s, mrs[i + 1], mre[i + 1], e, s]]
             # front side
             for i, (s, e) in enumerate(list(zip(mfs, mfe))[:-1]):
-                self.paths += [[s, mfs[i+1], mfe[i+1], e, s]]
+                self.paths += [[s, mfs[i + 1], mfe[i + 1], e, s]]
             # back side
             for i, (s, e) in enumerate(list(zip(mbs, mbe))[:-1]):
-                self.paths += [[s, mbs[i+1], mbe[i+1], e, s]]
-            
+                self.paths += [[s, mbs[i + 1], mbe[i + 1], e, s]]
+
             per += del_per
-        
-        self.paths = [[ vec_norm(p) * self.radius for p in path] for path in self.paths]
+
+        self.paths = [[vec_norm(p) * self.radius for p in path] for path in self.paths]
 
     def get_mat_and_paths(self):
         return (
@@ -344,6 +354,7 @@ class CubicalSphere(SceneObj):
                 [(self.rot.rotate(p) + self.pos) * self.scale for p in path] for path in self.paths
             ]
         )
+
 
 class Sphere(SceneObj):
     def __init__(self, radius, subdivision=32, **kwargs):
@@ -357,7 +368,7 @@ class Sphere(SceneObj):
         self.paths = []
         circle = []
         start_angle = np.pi / 2
-        del_per = 1/self.subdivision
+        del_per = 1 / self.subdivision
         per = 0
         while per <= 1:
             theta = lerp(-start_angle, start_angle, per)
@@ -367,13 +378,13 @@ class Sphere(SceneObj):
             per += del_per
 
         rot = Quaternion(VEC3_Y_AXIS, lerp(0, TAU, del_per), angel_in_radians=True)
-        
+
         per = del_per
         while per <= 1:
             new_circle = [rot.rotate(p) for p in circle]
             for i, (s, e) in enumerate(list(zip(circle, new_circle))[:-1]):
-                s2 = circle[i+1]
-                e2 = new_circle[i+1]
+                s2 = circle[i + 1]
+                e2 = new_circle[i + 1]
                 self.paths += [[e, e2, s2, s, e]]
             circle = new_circle
             per += del_per
@@ -385,6 +396,7 @@ class Sphere(SceneObj):
                 [(self.rot.rotate(p) + self.pos) * self.scale for p in path] for path in self.paths
             ]
         )
+
 
 class Cylinder(SceneObj):
     def __init__(self, radius, height, subdivision=32, **kwargs):
@@ -413,12 +425,12 @@ class Cylinder(SceneObj):
         all_y_pos = np.linspace(start_pos, end_pos, self.subdivision)
 
         for i, y_pos in enumerate(all_y_pos[:-1]):
-            e_y_pos = all_y_pos[i+1]
+            e_y_pos = all_y_pos[i + 1]
             s_circle = [p + y_pos for p in circle]
             e_circle = [p + e_y_pos for p in circle]
             for i, (s, e) in enumerate(list(zip(s_circle, e_circle))[:-1]):
-                s2 = s_circle[i+1]
-                e2 = e_circle[i+1]
+                s2 = s_circle[i + 1]
+                e2 = e_circle[i + 1]
 
                 self.paths += [[s, s2, e2, e, s]]
 
