@@ -7,6 +7,7 @@ from lib.tex.tex_to_svg import tex_to_svg_file
 class TexEquation(SceneObj):
     def __init__(self, equation, **kwargs):
         super().__init__(**kwargs)
+        equation = f'\\[ {equation} \\]'
         self.svg_file = tex_to_svg_file(equation)
         parsed_svg = SvgParser(self.svg_file)
         self.paths = parsed_svg.paths

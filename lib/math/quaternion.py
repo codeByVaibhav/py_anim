@@ -59,7 +59,8 @@ class Quaternion(object):
     def rotate(self, vec):
         q_ = self.wxyz * -1
         q_[0] *= -1
-        v = np.array([0, vec[0], vec[1], vec[2]], dtype=np.float64)
+        # v = np.array([0, vec[0], vec[1], vec[2]], dtype=np.float64)
+        v = vector(0, vec[0], vec[1], vec[2])
         r = H(H(self.wxyz, v), q_)
 
         return vector(r[1], r[2], r[3])

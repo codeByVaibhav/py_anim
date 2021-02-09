@@ -30,7 +30,7 @@ def cubic_path(s, c1, c2, e):
 
 
 def ange_bt_vec(vec1, vec2):
-    cos = vec1.dot(vec2) / (vec_mag(vec1) * vec_mag(vec2.mag()))
+    cos = vec1.dot(vec2) / (vec_mag(vec1) * vec_mag(vec2))
     cos = np.clip(cos, -1, 1)
     return math.acos(cos) * (180 / np.pi)
 
@@ -72,7 +72,6 @@ def arc_path(s, e, rx, ry, angel_from_x_axis, large_arc_flag, sweep_flag):
     cx, cy = r_mat.dot(c_1_mat) + np.array([(x1 + x2) / 2, (y1 + y2) / 2])
 
     # Calculate θ1 θ2 Δθ
-    x_axis = VEC2_X_AXIS
     start_vec = vector((x_1 - cx_1) / rx, (y_1 - cy_1) / ry)
     end_vec = vector((-x_1 - cx_1) / rx, (-y_1 - cy_1) / ry)
 

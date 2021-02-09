@@ -3,6 +3,10 @@ import math
 import numpy as np
 
 
+def vector(*values):
+    return np.array(values, dtype=np.float64)
+
+
 def vec_mag(vec):
     return math.sqrt(vec.dot(vec))
 
@@ -25,10 +29,6 @@ def vec_direction_norm(start_vec, end_vec):
 
 def vec_to_str(vec):
     return str(vec)[1:-1]
-
-
-def vector(*values):
-    return np.array(values, dtype=np.float64)
 
 
 VEC2_X_AXIS = vector(1, 0)

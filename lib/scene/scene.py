@@ -149,7 +149,8 @@ class Scene(object):
             while time > 0:
                 time -= self.unit_time
                 self.frames += self.get_sorted_frame(
-                    self.insert_background_to_frames(frame))
+                    self.insert_background_to_frames(frame)
+                )
 
     def insert_background_to_frames(self, *frames):
         if len(self.background_frame) > 0:
@@ -190,6 +191,7 @@ class Scene(object):
 
     def end(self):
         print('Processing all Frames.')
+        imgs = []
         for i, frame in enumerate(tqdm(self.frames)):
             svg_paths = [
                 self.get_svg_path(
@@ -201,7 +203,9 @@ class Scene(object):
             svg_frame = self.svg_header + '\n'.join(svg_paths) + self.svg_end
             # write_svg(FRAMES_DIR + f"\\{frame_no}.svg", frame)
             png_file = FRAMES_DIR + f"\\{i + 1}.png"
-            svg2png(svg_frame, write_to=png_file)
+            svg2png(bytestring=svg_frame, write_to=png_file)
+            # img = svg2png(bytestring=svg_frame)
+            # imgs.append(img)
 
         # -hide_banner -nostats -loglevel 0
         cmd = f'ffmpeg -y -vsync 0 -hwaccel cuda -hwaccel_output_format cuda -i {FRAMES_DIR}\\%0d.png -c:v h264_nvenc -vf fps={self.fps} -threads 16 -pix_fmt yuv420p -b:v 15M {VIDEO_DIR}\\out.mp4'
