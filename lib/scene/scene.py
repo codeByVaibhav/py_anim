@@ -7,6 +7,11 @@ from lib.file.constants import *
 from lib.material.material import *
 from lib.math.quaternion import *
 
+import shlex
+import subprocess
+from io import BytesIO
+from touch import touch
+
 svg = f'''\
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 WIDTH HEIGHT">
 
@@ -191,7 +196,7 @@ class Scene(object):
 
     def end(self):
         print('Processing all Frames.')
-        imgs = []
+
         for i, frame in enumerate(tqdm(self.frames)):
             svg_paths = [
                 self.get_svg_path(
@@ -201,19 +206,74 @@ class Scene(object):
             ]
 
             svg_frame = self.svg_header + '\n'.join(svg_paths) + self.svg_end
-            # write_svg(FRAMES_DIR + f"\\{frame_no}.svg", frame)
+            write_svg(FRAMES_DIR + f"\\{i + 1}.svg", svg_frame)
             png_file = FRAMES_DIR + f"\\{i + 1}.png"
+            # file_like = BytesIO()
             svg2png(bytestring=svg_frame, write_to=png_file)
+            # vb = from_bytes_to_bytes(file_like.read(), 60)
+            # from_bytes_to_file(vb, 60)
             # img = svg2png(bytestring=svg_frame)
             # imgs.append(img)
 
         # -hide_banner -nostats -loglevel 0
-        cmd = f'ffmpeg -y -vsync 0 -hwaccel cuda -hwaccel_output_format cuda -i {FRAMES_DIR}\\%0d.png -c:v h264_nvenc -vf fps={self.fps} -threads 16 -pix_fmt yuv420p -b:v 15M {VIDEO_DIR}\\out.mp4'
-        # subprocess.Popen(cmd, stdin=subprocess.PIPE)
-        os.system(cmd)
+        cmd_hi = f'ffmpeg -y -vsync 0 -hwaccel cuda -hwaccel_output_format cuda -i {FRAMES_DIR}\\%0d.png -c:v h264_nvenc -vf fps={self.fps} -threads 16 -pix_fmt yuv420p -b:v 15M {VIDEO_DIR}\\out.mp4'
+        cmd_low = f'ffmpeg -y -vsync 0 -hwaccel cuda -hwaccel_output_format cuda -i {FRAMES_DIR}\\%0d.png -c:v h264_nvenc -vf fps={self.fps} -threads 16 -pix_fmt yuv420p -b:v 5M {VIDEO_DIR}\\out.mp4'
+        os.system(cmd_low)
         os.system(f'{VIDEO_DIR}\\out.mp4')
 
 
 def write_svg(file, frame):
     with open(file, 'w') as f:
         f.write(frame)
+
+
+def from_bytes_to_file(
+        input_bytes: bytes,
+        fps: int,
+) -> bytes or None:
+    input_cmd = 'ffmpeg -y -vsync 0 -hwaccel cuda -hwaccel_output_format cuda'
+    output_cmd = f'-c:v h264_nvenc -vf fps={fps} -threads 16 -pix_fmt yuv420p -b:v 15M'
+
+    # if not os.path.exists(f'{VIDEO_DIR}\\out.mp4'):
+    #     touch(f'{VIDEO_DIR}\\out.mp4')
+    out_file = '"' + f'{VIDEO_DIR}\\out.mp4' + '"'
+    command = f'ffmpeg -i "concat:pipe:0|{out_file}" -c copy {out_file}'
+    ffmpeg_cmd = subprocess.Popen(
+        shlex.split(command),
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        shell=False
+    )
+    ffmpeg_cmd.communicate(input_bytes)
+
+
+def from_bytes_to_bytes(
+        input_bytes: bytes,
+        fps: int,
+) -> bytes or None:
+    input_cmd = '-loop 1'
+    output_cmd = f'-c:v libx264 -t 0.0166 -pix_fmt yuv420p'
+
+    # if not os.path.exists(f'{VIDEO_DIR}\\out.mp4'):
+    #     touch(f'{VIDEO_DIR}\\out.mp4')
+    command = f'ffmpeg {input_cmd} -hide_banner -nostats -loglevel 0 -i pipe:0 {output_cmd} -'
+    ffmpeg_cmd = subprocess.Popen(
+        shlex.split(command),
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        shell=False
+    )
+    b = b''
+    # write bytes to processe's stdin and close the pipe to pass
+    # data to piped process
+    ffmpeg_cmd.stdin.write(input_bytes)
+    ffmpeg_cmd.stdin.close()
+    while True:
+        output = ffmpeg_cmd.stdout.read()
+        if len(output) > 0:
+            b += output
+        else:
+            error_msg = ffmpeg_cmd.poll()
+            if error_msg is not None:
+                break
+    return b

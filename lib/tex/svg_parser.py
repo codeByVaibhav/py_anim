@@ -15,6 +15,7 @@ class SvgParser(object):
         self.sdb = -math.inf
         self.top_left = VEC3_ZERO
         self.bottom_right = VEC3_ZERO
+        self.regex = re.compile(r"[MmZzLlHhVvCcSsQqTtAa]|[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?")
         self.generate_defs()
         self.generate_path()
 
@@ -31,21 +32,25 @@ class SvgParser(object):
         doc.unlink()
 
     def get_dpath_commands_and_points(self, path_string):
+        # print(path_string)
         pattern = r'["MLHVCSQTAZ"]'
         all_path = []
         ms = list(zip(
             re.findall('M', path_string),
             re.split('M', path_string)[1:]
         ))
+        # print(ms)
         for _, path in ms:
             all_path.append(list(zip(
                 re.findall(pattern, 'M' + path),
                 re.split(pattern, 'M' + path)[1:]
             )))
+        # print(all_path)
         return all_path
 
     def get_last_vec(self, path, i):
         cmd, points = path[i - 1]
+
         if cmd == 'H':
             scmd = 'H'
             sx = points
@@ -54,7 +59,9 @@ class SvgParser(object):
                 scmd, points = path[i - index]
                 index += 1
             sy = self.get_points_from_str(points)[-1]
+
             return cmd + scmd, [sx, sy]
+
         elif cmd == 'V':
             scmd = 'V'
             sy = points
@@ -62,25 +69,14 @@ class SvgParser(object):
             while scmd == 'V':
                 scmd, points = path[i - index]
                 index += 1
-            if scmd == 'H':
-                sx = points
-                return cmd + scmd, [sx, sy]
-            else:
-                sx = self.get_points_from_str(points)[-2]
-                return cmd + scmd, [sx, sy]
+            sx = points if scmd == 'H' else self.get_points_from_str(points)[-2]
+
+            return cmd + scmd, [sx, sy]
 
         return cmd, self.get_points_from_str(points)
 
     def get_points_from_str(self, points_str):
-        s_points = points_str.split(' ')
-        r = []
-        for p in s_points:
-            if '-' in p:
-                x, y = p.split('-')
-                r += [x, '-' + y]
-            else:
-                r += [p]
-        return r
+        return points_str.replace('-', ' -').split(' ')
 
     def get_line(self, path_points, i):
         if i == 0:
@@ -122,7 +118,6 @@ class SvgParser(object):
                     vector(c2x, c2y),
                     vector(ex, ey)
                 )
-
         elif cmd == 'Q':
             mx, my, ex, ey = self.get_points_from_str(e_points)
             return quadratic_path(s_vec, vector(mx, my), vector(ex, ey))
@@ -173,8 +168,7 @@ class SvgParser(object):
             [self.get_defs_from_svg(child) for child in element.childNodes]
         elif element.getAttribute('id'):
             if element.tagName == 'path':
-                self.defs[element.getAttribute('id')] = self.get_path_from_d_path(
-                    element.getAttribute('d'))
+                self.defs[element.getAttribute('id')] = self.get_path_from_d_path(element.getAttribute('d'))
 
     def add_rect(self, rect_element):
         x = float(rect_element.getAttribute('x')) * self.scale
