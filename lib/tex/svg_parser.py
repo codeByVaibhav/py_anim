@@ -15,7 +15,6 @@ class SvgParser(object):
         self.sdb = -math.inf
         self.top_left = VEC3_ZERO
         self.bottom_right = VEC3_ZERO
-        self.regex = re.compile(r"[MmZzLlHhVvCcSsQqTtAa]|[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?")
         self.generate_defs()
         self.generate_path()
 
@@ -31,75 +30,67 @@ class SvgParser(object):
             self.get_defs_from_svg(svg)
         doc.unlink()
 
-    def get_dpath_commands_and_points(self, path_string):
-        # print(path_string)
+    def get_points_from_str(self, points_str: str):
+        return list(filter(lambda x: x, points_str.replace('-', ' -').split(' ')))
+
+    def get_commands_and_points(self, path_str: str):
         pattern = r'["MLHVCSQTAZ"]'
-        all_path = []
-        ms = list(zip(
-            re.findall('M', path_string),
-            re.split('M', path_string)[1:]
-        ))
-        # print(ms)
-        for _, path in ms:
-            all_path.append(list(zip(
-                re.findall(pattern, 'M' + path),
-                re.split(pattern, 'M' + path)[1:]
-            )))
-        # print(all_path)
-        return all_path
+        paths_str = path_str.split('M')[1:]
+        paths = []
+        for path_s in paths_str:
+            path_s = 'M' + path_s
+            commands = re.findall(pattern, path_s)
+            points = map(self.get_points_from_str, re.split(pattern, path_s)[1:])
+            paths.append(list(zip(commands, points)))
+        return paths
 
     def get_last_vec(self, path, i):
         cmd, points = path[i - 1]
+        index = 2
 
         if cmd == 'H':
             scmd = 'H'
-            sx = points
-            index = 2
+            sx = points[0]
             while scmd == 'H':
                 scmd, points = path[i - index]
                 index += 1
-            sy = self.get_points_from_str(points)[-1]
-
+            sy = points[-1]
             return cmd + scmd, [sx, sy]
 
         elif cmd == 'V':
             scmd = 'V'
-            sy = points
-            index = 2
+            sy = points[0]
             while scmd == 'V':
                 scmd, points = path[i - index]
                 index += 1
-            sx = points if scmd == 'H' else self.get_points_from_str(points)[-2]
-
+            sx = points[0] if scmd == 'H' else points[-2]
             return cmd + scmd, [sx, sy]
 
-        return cmd, self.get_points_from_str(points)
-
-    def get_points_from_str(self, points_str):
-        return points_str.replace('-', ' -').split(' ')
+        return cmd, points
 
     def get_line(self, path_points, i):
-        if i == 0:
-            cmd, points = path_points[0]
-            return [vector(*self.get_points_from_str(points))]
-
         cmd, e_points = path_points[i]
+
+        if i == 0:
+            return [vector(*e_points)]
+        elif cmd == 'Z':
+            return [vector(*path_points[0][1])]
 
         lcmd, l_points = self.get_last_vec(path_points, i)
         s_vec = vector(l_points[-2], l_points[-1])
 
         if cmd == 'L':
-            ex, ey = self.get_points_from_str(e_points)[-2:]
+            ex, ey = e_points[-2:]
             return [vector(ex, ey)]
         elif cmd == 'H':
-            return [vector(e_points, s_vec[1])]
+            return [vector(*e_points, s_vec[1])]
         elif cmd == 'V':
-            return [vector(s_vec[0], e_points)]
+            return [vector(s_vec[0], *e_points)]
         elif cmd == 'C':
-            c1x, c1y, c2x, c2y, ex, ey = self.get_points_from_str(e_points)
+            c1x, c1y, c2x, c2y, ex, ey = e_points
             return cubic_path(s_vec, vector(c1x, c1y), vector(c2x, c2y), vector(ex, ey))
         elif cmd == 'S':
-            c2x, c2y, ex, ey = self.get_points_from_str(e_points)
+            c2x, c2y, ex, ey = e_points
             if lcmd in ['S', 's', 'C', 'c']:
                 # first control point is the reflection of the last curve's last control point
                 last_end_p = vector(l_points[-2], l_points[-1])
@@ -119,13 +110,13 @@ class SvgParser(object):
                     vector(ex, ey)
                 )
         elif cmd == 'Q':
-            mx, my, ex, ey = self.get_points_from_str(e_points)
+            mx, my, ex, ey = e_points
             return quadratic_path(s_vec, vector(mx, my), vector(ex, ey))
         elif cmd == 'T':
             # Not Implemented
             return []
         elif cmd == 'A':
-            rx, ry, angle_x_axis, large_arc_flag, sweep_flag, ex, ey = self.get_points_from_str(e_points)
+            rx, ry, angle_x_axis, large_arc_flag, sweep_flag, ex, ey = e_points
             return arc_path(
                 s_vec,
                 vector(ex, ey),
@@ -135,21 +126,14 @@ class SvgParser(object):
                 int(large_arc_flag),
                 int(sweep_flag)
             )
-        elif cmd == 'Z':
-            cmd, path = path_points[0]
-            x, y = self.get_points_from_str(path)[-2:]
-            return [vector(x, y)]
 
     def get_path_from_d_path(self, d_path):
-        paths = self.get_dpath_commands_and_points(d_path)
-        new_paths = []
+        paths = self.get_commands_and_points(d_path)
+        result_path = []
         for path in paths:
-            line = []
             for i in range(len(path)):
-                line += self.get_line(path, i)
-            new_paths.append(line)
-
-        return new_paths
+                result_path += self.get_line(path, i)
+        return result_path
 
     def get_paths_from_svg(self, element):
         if not isinstance(element, minidom.Element):
@@ -188,19 +172,16 @@ class SvgParser(object):
         y = use_element.getAttribute('y')
         vec = vector(x, y)
         path_link = use_element.getAttribute('xlink:href')[1:]
-        paths = self.defs[path_link]
-        new_paths = []
-        for path in paths:
-            new_path = []
-            for p in path:
-                res_vec = vector(p[0] + vec[0], -1 * (p[1] + vec[1]), 0) * self.scale
-                dis_from_origin = vec_distance(res_vec, VEC3_ZERO)
-                if dis_from_origin < self.sdt:
-                    self.sdt = dis_from_origin
-                    self.top_left = res_vec
-                if dis_from_origin > self.sdb:
-                    self.sdb = dis_from_origin
-                    self.bottom_right = res_vec
-                new_path.append(res_vec)
-            new_paths.append(new_path)
-        self.paths += new_paths
+        new_path = []
+        for p in self.defs[path_link]:
+            res_vec = vector(p[0] + vec[0], -1 * (p[1] + vec[1]), 0) * self.scale
+            dis_from_origin = vec_distance(res_vec, VEC3_ZERO)
+            if dis_from_origin < self.sdt:
+                self.sdt = dis_from_origin
+                self.top_left = res_vec
+            if dis_from_origin > self.sdb:
+                self.sdb = dis_from_origin
+                self.bottom_right = res_vec
+            new_path.append(res_vec)
+
+        self.paths.append(new_path)

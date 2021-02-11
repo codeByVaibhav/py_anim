@@ -125,14 +125,20 @@ class Scene(object):
         Takes different frames and mergs them and returns
         the merged frames
         '''
+        # last_frame_no = 0
         last_frame_no = 0
         for f in frames:
             if last_frame_no < len(f):
                 last_frame_no = len(f)
 
+        # merged_frame = [
+        #     [frame[i] if i < len(frame) else frame[-1] for frame in frames]
+        #     for i in
+        #     [i for i in range(last_frame_no)]
+        # ]
         merged_frame = []
         for i in range(last_frame_no):
-            frame = []
+            frame = [frame[i] if i < len(frame) else frame[-1] for frame in frames]
             for f in frames:
                 if i < len(f):
                     frame += f[i]
@@ -178,14 +184,21 @@ class Scene(object):
         for obj in objs:
             mat, paths = obj.get_mat_and_paths()
             for path in paths:
-                frame.append((mat, path))
-        return self.get_sorted_frame(frame)
+                if path:
+                    frame += (mat, path)
+        return frame
 
     def get_sorted_path(self, path):
         return sorted(path, key=lambda vec: vec[2])
 
     def get_sorted_frame(self, frame):
-        return sorted(frame, key=lambda mat_path: self.get_sorted_path(mat_path[-1])[-1][2], reverse=True)
+        # return sorted(frame, key=lambda mat_path: self.get_sorted_path(mat_path[-1])[-1][2], reverse=True)
+        return sorted(frame, key=self.sorter_f, reverse=True)
+
+    def sorter_f(self, mat_path):
+        if mat_path[-1]:
+            return self.get_sorted_path(mat_path[-1])[-1][2]
+        return 0
 
     def get_sorted_frames(self, frames):
         return [self.get_sorted_frame(frame) for frame in frames]
@@ -206,7 +219,7 @@ class Scene(object):
             ]
 
             svg_frame = self.svg_header + '\n'.join(svg_paths) + self.svg_end
-            write_svg(FRAMES_DIR + f"\\{i + 1}.svg", svg_frame)
+            # write_svg(FRAMES_DIR + f"\\{i + 1}.svg", svg_frame)
             png_file = FRAMES_DIR + f"\\{i + 1}.png"
             # file_like = BytesIO()
             svg2png(bytestring=svg_frame, write_to=png_file)

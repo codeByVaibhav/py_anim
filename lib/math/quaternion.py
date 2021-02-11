@@ -46,7 +46,8 @@ class Quaternion(object):
         y /= mag
         z /= mag
 
-        self.wxyz = np.array([w, x, y, z], dtype=np.float64)
+        # self.wxyz = np.array([w, x, y, z], dtype=np.float64)
+        self.wxyz = vector(w, x, y, z)
 
     def __mul__(self, o):
         r = Quaternion(VEC3_ZERO, 0)

@@ -39,7 +39,6 @@ def lerp_path(path, per):
     new_per = per - last_point
     new_path = path[:last_point + 1]
 
-    new_path.append(
-        lerp(path[last_point], path[last_point + 1], new_per)
-    )
+    new_path.append(lerp(path[last_point], path[last_point + 1], new_per))
+
     return new_path

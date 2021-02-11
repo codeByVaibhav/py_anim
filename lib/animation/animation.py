@@ -76,8 +76,11 @@ class ShowCreation(Animation):
         while per - alpha <= 1:
             per += self.speed
 
-            frame = [(mat, lerp_path(path, smooth(per - (i / 50))))
-                     for i, path in enumerate(paths)]
+            frame = [
+                (
+                    mat, lerp_path(path, smooth(per - (i / 50)))
+                ) for i, path in enumerate(paths)
+            ]
 
             final_frames.append(frame)
 

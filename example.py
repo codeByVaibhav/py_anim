@@ -27,8 +27,8 @@ class StartScene(Scene):
         #     r'Integral $\int_{a}^{b} x^2 \,dx$ inside text',
         #     mat=Material(stroke=DARK_BLUE, stroke_width=2, fill_opacity=1.0, fill=DARK_BLUE),
         # )
-        # cube = Cuboid(1, 1, 1, mat=Material(
-        #     stroke=DARK_BLUE, stroke_width=8))
+        cube = Cuboid(1, 1, 1, mat=Material(
+            stroke=DARK_BLUE, stroke_width=8))
 
         # support_latex = TexText(
         #     r'py anim supports \LaTeX{}',
@@ -40,19 +40,30 @@ class StartScene(Scene):
         #     mat=Material(stroke=DARK_BLUE),
         #     pos=VEC3_UP * 4
         # )
-
+        #
         eq = TexEquation(
             r'\zeta(s)=\int_1^\infty\sum_{n=1}^\infty e^{-\pi n^2x}(x^{s/2}+x^{(1-s)/2})\frac{dx}{x}-\frac{1}{s}-\frac{1}{1-s}',
-            mat=Material(stroke=DARK_BLUE)
+            mat=Material(stroke=DARK_BLUE, fill_opacity=1, fill=DARK_BLUE)
         )
         self.render(
             ShowCreation(eq),
-            RotateFrame(
-                VEC3_Y_AXIS, 360,
-                self.get_objs_frame(eq),
-                speed=0.1
-            ),
+            # Translate(intro_eq, VEC3_UP * 2),
+            # RotateFrame(
+            #     VEC3_Y_AXIS, 360,
+            #     self.get_objs_frame(eq),
+            #     speed=0.1
+            # ),
         )
+
+        # self.render(
+        #     ShowCreation(cube),
+        #     # Translate(intro_eq, VEC3_UP * 2),
+        #     RotateFrame(
+        #         VEC3_Y_AXIS, 360,
+        #         self.get_objs_frame(cube),
+        #         speed=0.1
+        #     ),
+        # )
 
         # self.render(
         #     MorphShape(support_latex, eq, speed=0.01),
