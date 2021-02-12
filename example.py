@@ -42,23 +42,46 @@ class StartScene(Scene):
         #     pos=VEC3_UP * 4
         # )
         #
-        eq = TexEquation(
-            r'\zeta(s)=\int_1^\infty\sum_{n=1}^\infty e^{-\pi n^2x}(x^{s/2}+x^{(1-s)/2})\frac{dx}{x}-\frac{1}{s}-\frac{1}{1-s}',
-            mat=Material(stroke=DARK_BLUE, fill_opacity=1, fill=DARK_BLUE)
-        )
+        # eq = TexEquation(
+        #     r'\zeta(s)=\int_1^\infty\sum_{n=1}^\infty e^{-\pi n^2x}(x^{s/2}+x^{(1-s)/2})\frac{dx}{x}-\frac{1}{s}-\frac{1}{1-s}',
+        #     mat=Material(stroke=DARK_BLUE, fill_opacity=1, fill=DARK_BLUE)
+        # )
+        github = TexText('Github',
+                         mat=Material(stroke=GREY_BROWN, fill_opacity=1, fill=GREY_BROWN),
+                         pos=VEC3_DOWN * 4
+                         )
         svg_f = Svg('elephant.svg',
-                    mat=Material(stroke=DARK_BLUE, fill_opacity=1, fill=DARK_BLUE)
+                    mat=Material(stroke=DARK_BLUE, fill_opacity=1, fill=DARK_BLUE),
+                    scale=VEC3_NSCALE * 15
                     )
         self.render(
             ShowCreation(svg_f, speed=0.01),
-            # Translate(intro_eq, VEC3_UP * 2),
-            MorphShape(svg_f, eq)
+            # Translate(github, VEC3_DOWN * 2),
+            # MorphShape(svg_f, eq)
             # RotateFrame(
             #     VEC3_Y_AXIS, 360,
             #     self.get_objs_frame(svg_f),
             #     speed=0.01
             # ),
         )
+        self.add_objs_to_background(svg_f)
+        self.render(
+            Translate(github, VEC3_DOWN * 1.5),
+        )
+        self.clear_background()
+        self.add_objs_to_background(github)
+
+        self.render(
+            RotateFrame(
+                VEC3_Y_AXIS, 360,
+                self.get_objs_frame(svg_f),
+                speed=0.01
+            ),
+        )
+
+        self.add_objs_to_background(svg_f)
+
+        self.pause(time=1.0)
 
         # self.render(
         #     ShowCreation(cube),
