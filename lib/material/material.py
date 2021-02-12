@@ -6,8 +6,6 @@ from lib.math.vector import *
 
 
 class Material(object):
-    all_styles = ["fill", "stroke", "stroke_width", "stroke_dasharray", "fill_opacity", "stroke_opacity"]
-
     def __init__(
             self,
             fill=BLACK,
@@ -57,8 +55,12 @@ class Material(object):
             stroke_width = lerp(self.stroke_width, o.stroke_width, percentage)
 
         return Material(
-            fill=fill, fill_opacity=fill_opacity, stroke=stroke, stroke_opacity=stroke_opacity,
-            stroke_dasharray=stroke_dasharray, stroke_width=stroke_width
+            fill=fill,
+            fill_opacity=fill_opacity,
+            stroke=stroke,
+            stroke_opacity=stroke_opacity,
+            stroke_dasharray=stroke_dasharray,
+            stroke_width=stroke_width
         )
 
 
