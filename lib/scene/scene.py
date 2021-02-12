@@ -183,9 +183,7 @@ class Scene(object):
         frame = []
         for obj in objs:
             mat, paths = obj.get_mat_and_paths()
-            for path in paths:
-                if path:
-                    frame += (mat, path)
+            frame += [(mat, path) for path in paths]
         return frame
 
     def get_sorted_path(self, path):

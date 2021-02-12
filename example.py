@@ -42,16 +42,17 @@ class StartScene(Scene):
         #     pos=VEC3_UP * 4
         # )
         #
-        # eq = TexEquation(
-        #     r'\zeta(s)=\int_1^\infty\sum_{n=1}^\infty e^{-\pi n^2x}(x^{s/2}+x^{(1-s)/2})\frac{dx}{x}-\frac{1}{s}-\frac{1}{1-s}',
-        #     mat=Material(stroke=DARK_BLUE, fill_opacity=1, fill=DARK_BLUE)
-        # )
+        eq = TexEquation(
+            r'\zeta(s)=\int_1^\infty\sum_{n=1}^\infty e^{-\pi n^2x}(x^{s/2}+x^{(1-s)/2})\frac{dx}{x}-\frac{1}{s}-\frac{1}{1-s}',
+            mat=Material(stroke=DARK_BLUE, fill_opacity=1, fill=DARK_BLUE)
+        )
         svg_f = Svg('elephant.svg',
                     mat=Material(stroke=DARK_BLUE, fill_opacity=1, fill=DARK_BLUE)
                     )
         self.render(
             ShowCreation(svg_f, speed=0.01),
             # Translate(intro_eq, VEC3_UP * 2),
+            MorphShape(svg_f, eq)
             # RotateFrame(
             #     VEC3_Y_AXIS, 360,
             #     self.get_objs_frame(svg_f),
