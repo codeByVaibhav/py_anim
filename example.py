@@ -4,12 +4,13 @@ from lib.scene.scene import *
 from lib.tex.text import *
 from lib.tex.equation import *
 import math
+from lib.svg.svg import Svg
 
 # import mpmath
 
 
 def complex_func(vec, inp=2):
-    comp = complex(vec.x(), vec.y()) ** inp
+    comp = complex(vec[0], vec[1]) ** inp
     return vector(comp.real, comp.imag, 0)
 
 def my_sin(p, inp=None):
@@ -41,17 +42,20 @@ class StartScene(Scene):
         #     pos=VEC3_UP * 4
         # )
         #
-        eq = TexEquation(
-            r'\zeta(s)=\int_1^\infty\sum_{n=1}^\infty e^{-\pi n^2x}(x^{s/2}+x^{(1-s)/2})\frac{dx}{x}-\frac{1}{s}-\frac{1}{1-s}',
-            mat=Material(stroke=DARK_BLUE, fill_opacity=1, fill=DARK_BLUE)
-        )
+        # eq = TexEquation(
+        #     r'\zeta(s)=\int_1^\infty\sum_{n=1}^\infty e^{-\pi n^2x}(x^{s/2}+x^{(1-s)/2})\frac{dx}{x}-\frac{1}{s}-\frac{1}{1-s}',
+        #     mat=Material(stroke=DARK_BLUE, fill_opacity=1, fill=DARK_BLUE)
+        # )
+        svg_f = Svg('elephant.svg',
+                    mat=Material(stroke=DARK_BLUE, fill_opacity=1, fill=DARK_BLUE)
+                    )
         self.render(
-            ShowCreation(eq),
+            ShowCreation(svg_f, speed=0.01),
             # Translate(intro_eq, VEC3_UP * 2),
             # RotateFrame(
             #     VEC3_Y_AXIS, 360,
-            #     self.get_objs_frame(eq),
-            #     speed=0.1
+            #     self.get_objs_frame(svg_f),
+            #     speed=0.01
             # ),
         )
 
