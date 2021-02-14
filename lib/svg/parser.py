@@ -10,28 +10,50 @@ class Parser(object):
         self.svg_file = svg_file
         self.defs = {}
         self.paths = []
-        self.scale = 0.005
-        self.sdt = math.inf
-        self.sdb = -math.inf
-        self.top_left = VEC3_ZERO
-        self.bottom_right = VEC3_ZERO
-        self.generate_defs()
-        self.generate_path()
+        self.width = 0
+        self.height = 0
+        self.x_pix = 1
+        self.y_pix = 1
+        self.x_off = 0
+        self.y_off = 0
+        self.generate_paths()
 
-    def generate_path(self):
-        doc = minidom.parse(self.svg_file)
-        for svg in doc.getElementsByTagName("svg"):
-            self.get_paths_from_svg(svg)
-        doc.unlink()
+    def generate_paths(self):
+        """Only supports one svg element in an svg file"""
+        svgDoc = minidom.parse(self.svg_file)
 
-    def generate_defs(self):
-        doc = minidom.parse(self.svg_file)
-        for svg in doc.getElementsByTagName("svg"):
-            self.get_defs_from_svg(svg)
-        doc.unlink()
+        svg = svgDoc.getElementsByTagName("svg")[0]
+
+        width = svg.getAttribute("width")
+        height = svg.getAttribute("height")
+
+        try:
+            width = float(width)
+        except Exception as e:
+            width = float(width[:-2])
+
+        try:
+            height = float(height)
+        except Exception as e:
+            height = float(height[:-2])
+
+        self.width = width
+        self.height = height
+
+        if svg.getAttribute("viewBox"):
+            sx, sy, user_width, user_height = list(map(float, svg.getAttribute("viewBox").split(" ")))
+            self.x_pix = width / user_width
+            self.y_pix = height / user_height
+            self.x_off = -sx * self.x_pix
+            self.y_off = -sy * self.y_pix
+
+        self.get_defs_from_svg(svg)
+        self.get_paths_from_svg(svg)
+
+        svgDoc.unlink()
 
     def get_points_from_str(self, points_str: str):
-        return re.split(r'[" ,"]', points_str[1:-1])
+        return re.split(r'[", "]', points_str[1:-1])
 
     def get_commands_and_points(self, path_str: str):
         path_str = parse_path(path_str).d()
@@ -131,9 +153,7 @@ class Parser(object):
     def get_path_from_d_path(self, d_path):
         paths = self.get_commands_and_points(d_path)
         result_path = []
-        for path in paths:
-            for i in range(len(path)):
-                result_path += self.get_line(path, i)
+        [[result_path.extend(self.get_line(path, i)) for i in range(len(path))] for path in paths]
         return result_path
 
     def get_paths_from_svg(self, element):
@@ -155,39 +175,36 @@ class Parser(object):
             return
         elif element.tagName in ['defs', 'svg', 'symbol']:
             [self.get_defs_from_svg(child) for child in element.childNodes]
-        elif element.getAttribute('id'):
-            if element.tagName == 'path':
-                self.defs[element.getAttribute('id')] = self.get_path_from_d_path(element.getAttribute('d'))
+        elif element.getAttribute('id') and element.tagName == 'path':
+            self.defs[element.getAttribute('id')] = self.get_path_from_d_path(element.getAttribute('d'))
 
     def add_circle(self, circle_element):
-        print(circle_element)
+        pass
 
     def add_rect(self, rect_element):
-        x = float(rect_element.getAttribute('x')) * self.scale
-        y = float(rect_element.getAttribute('y')) * - self.scale
-        width = float(rect_element.getAttribute('width')) * self.scale
-        height = float(rect_element.getAttribute('height')) * self.scale
+        x = float(rect_element.getAttribute('x'))
+        y = float(rect_element.getAttribute('y'))
+        width = float(rect_element.getAttribute('width'))
+        height = float(rect_element.getAttribute('height'))
 
-        lup = vector(x, y, 0)
-        rdown = vector(x + width, y + height, 0)
-        rup = vector(x + width, y, 0)
-        ldown = vector(x, y + height, 0)
+        lup = self.get_vec(x, y)
+        rdown = self.get_vec(x + width, y + height)
+        rup = self.get_vec(x + width, y)
+        ldown = self.get_vec(x, y + height)
 
         self.paths.append([rdown, rup, lup, ldown, rdown])
 
     def add_path(self, path_element):
         new_path = []
-        for p in self.get_path_from_d_path(path_element.getAttribute('d')):
-            res_vec = vector(p[0], -1 * p[1], 0) * self.scale
-            dis_from_origin = vec_distance(res_vec, VEC3_ZERO)
-            if dis_from_origin < self.sdt:
-                self.sdt = dis_from_origin
-                self.top_left = res_vec
-            if dis_from_origin > self.sdb:
-                self.sdb = dis_from_origin
-                self.bottom_right = res_vec
-            new_path.append(res_vec)
+        [new_path.append(self.get_vec(p[0], p[1])) for p in self.get_path_from_d_path(path_element.getAttribute('d'))]
         self.paths.append(new_path)
+
+    def get_vec(self, x, y):
+        return vector(
+            x * self.x_pix + self.x_off - (self.width / 2),
+            -(y * self.y_pix + self.y_off - (self.height / 2)),
+            0
+        )
 
     def add_use(self, use_element):
         x = use_element.getAttribute('x')
@@ -196,15 +213,7 @@ class Parser(object):
         path_link = use_element.getAttribute('xlink:href')[1:]
         new_path = []
         for p in self.defs[path_link]:
-            res_vec = vector(p[0] + vec[0], -1 * (p[1] + vec[1]), 0) * self.scale
-            dis_from_origin = vec_distance(res_vec, VEC3_ZERO)
-            if dis_from_origin < self.sdt:
-                self.sdt = dis_from_origin
-                self.top_left = res_vec
-            if dis_from_origin > self.sdb:
-                self.sdb = dis_from_origin
-                self.bottom_right = res_vec
+            res_vec = self.get_vec(p[0] + vec[0], p[1] + vec[1])
             new_path.append(res_vec)
 
         self.paths.append(new_path)
-

@@ -16,6 +16,8 @@ svg = f'''\
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 WIDTH HEIGHT">
 
 <rect width="100%" height="100%" fill="black" />
+<!--  <path d="M960 0L960 1080" stroke="red"/>  -->
+<!--  <path d="M0 540L1920 540" stroke="red"/>  -->
 
 '''
 
@@ -26,7 +28,6 @@ class Camera(object):
         self.rot = rot
         self.scale = scale
         self.center_coordinate = vector(width / 2, height / 2)
-
         self.aspect_ratio = height / width
         self.fov = np.pi / 2
         self.fov_rad = 1.0 / math.tan(self.fov / 2)
@@ -70,7 +71,8 @@ class Scene(object):
 
         self.camera = Camera(width=width, height=height)
 
-        self.svg_header = svg.replace('WIDTH HEIGHT', f'{width} {height}')
+        self.svg_header = svg.replace('WIDTH', str(width))
+        self.svg_header = self.svg_header.replace('HEIGHT', str(height))
         self.svg_end = '\n</svg>'
         self.frames = []
         self.svg_frames = []
@@ -100,7 +102,9 @@ class Scene(object):
                 all_frames += [*frames]
         if merged:
             all_frames = self.merge_frames(
-                *all_frames, stay_equal=merged_stay_equal)
+                *all_frames,
+                stay_equal=merged_stay_equal
+            )
 
         if get_frames_without_background:
             if sort_frames:
