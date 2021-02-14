@@ -28,8 +28,8 @@ class StartScene(Scene):
         #     r'Integral $\int_{a}^{b} x^2 \,dx$ inside text',
         #     mat=Material(stroke=DARK_BLUE, stroke_width=2, fill_opacity=1.0, fill=DARK_BLUE),
         # )
-        cube = Cuboid(1, 1, 1, mat=Material(
-            stroke=DARK_BLUE, stroke_width=8))
+        # cube = Cuboid(1, 1, 1, mat=Material(
+        #     stroke=DARK_BLUE, stroke_width=8))
 
         # support_latex = TexText(
         #     r'py anim supports \LaTeX{}',
@@ -53,11 +53,11 @@ class StartScene(Scene):
                          scale=VEC3_NSCALE * 0.1
                          )
         svg_f = Svg('elephant.svg',
-                    mat=Material(stroke=DARK_BLUE, fill_opacity=1, fill=DARK_BLUE),
-                    scale=VEC3_NSCALE * 0.01
+                    mat=Material(stroke=DARK_BLUE, fill_opacity=0.3, fill=DARK_BLUE),
+                    scale=VEC3_NSCALE * 0.2
                     )
         self.render(
-            ShowCreation(github, speed=0.05),
+            ShowCreation(svg_f, speed=0.05),
             # Translate(github, VEC3_DOWN * 2),
             # MorphShape(svg_f, eq)
             # RotateFrame(
@@ -66,10 +66,10 @@ class StartScene(Scene):
             #     speed=0.01
             # ),
         )
-        self.add_objs_to_background(github)
+        self.add_objs_to_background(svg_f)
         # self.render(ShowCreation(svg_f))
         # self.add_objs_to_background(svg_f)
-        self.pause(0.8)
+        self.pause(0.4)
         # self.add_objs_to_background(svg_f)
         # self.render(
         #     Translate(github, VEC3_DOWN * 1.5),

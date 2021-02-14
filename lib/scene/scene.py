@@ -14,11 +14,9 @@ from touch import touch
 
 svg = f'''\
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 WIDTH HEIGHT">
-
 <rect width="100%" height="100%" fill="black" />
 <!--  <path d="M960 0L960 1080" stroke="red"/>  -->
 <!--  <path d="M0 540L1920 540" stroke="red"/>  -->
-
 '''
 
 
