@@ -171,6 +171,7 @@ class Parser(object):
             self.add_circle(element)
 
     def get_defs_from_svg(self, element):
+        "experimental commit exp"
         if not isinstance(element, minidom.Element):
             return
         elif element.tagName in ['defs', 'svg', 'symbol']:
