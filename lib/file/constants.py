@@ -37,13 +37,10 @@ f.close()
 # endregion
 
 # region Video
-FRAMES_DIR = ".\\frames\\" + START_TIME
 VIDEO_DIR = ".\\out\\" + START_TIME
 
-FRAMES_DIR = os.path.abspath(FRAMES_DIR)
 VIDEO_DIR = os.path.abspath(VIDEO_DIR)
 
-os.mkdir(FRAMES_DIR)
 os.mkdir(VIDEO_DIR)
 
 # endregion

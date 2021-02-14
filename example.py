@@ -57,7 +57,7 @@ class StartScene(Scene):
                     scale=VEC3_NSCALE * 0.01
                     )
         self.render(
-            ShowCreation(eq, speed=0.005),
+            ShowCreation(eq, speed=0.05),
             # Translate(github, VEC3_DOWN * 2),
             # MorphShape(eq, svg_f)
             # RotateFrame(
