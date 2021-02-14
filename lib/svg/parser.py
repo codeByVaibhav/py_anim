@@ -152,9 +152,14 @@ class Parser(object):
 
     def get_path_from_d_path(self, d_path):
         paths = self.get_commands_and_points(d_path)
-        result_path = []
-        [[result_path.extend(self.get_line(path, i)) for i in range(len(path))] for path in paths]
-        return result_path
+        result_paths = []
+        for path in paths:
+            new_path = []
+            for i in range(len(path)):
+                new_path += self.get_line(path, i)
+            result_paths.append(new_path)
+        # [[result_path.extend(self.get_line(path, i)) for i in range(len(path))] for path in paths]
+        return result_paths
 
     def get_paths_from_svg(self, element):
         if not isinstance(element, minidom.Element):
@@ -171,7 +176,6 @@ class Parser(object):
             self.add_circle(element)
 
     def get_defs_from_svg(self, element):
-        "experimental commit exp"
         if not isinstance(element, minidom.Element):
             return
         elif element.tagName in ['defs', 'svg', 'symbol']:
@@ -196,9 +200,13 @@ class Parser(object):
         self.paths.append([rdown, rup, lup, ldown, rdown])
 
     def add_path(self, path_element):
-        new_path = []
-        [new_path.append(self.get_vec(p[0], p[1])) for p in self.get_path_from_d_path(path_element.getAttribute('d'))]
-        self.paths.append(new_path)
+        paths = self.get_path_from_d_path(path_element.getAttribute('d'))
+        for path in paths:
+            new_path = []
+            for p in path:
+                res_vec = self.get_vec(p[0], p[1])
+                new_path += [res_vec]
+            self.paths.append(new_path)
 
     def get_vec(self, x, y):
         return vector(
@@ -208,13 +216,12 @@ class Parser(object):
         )
 
     def add_use(self, use_element):
-        x = use_element.getAttribute('x')
-        y = use_element.getAttribute('y')
-        vec = vector(x, y)
+        x = float(use_element.getAttribute('x'))
+        y = float(use_element.getAttribute('y'))
         path_link = use_element.getAttribute('xlink:href')[1:]
-        new_path = []
-        for p in self.defs[path_link]:
-            res_vec = self.get_vec(p[0] + vec[0], p[1] + vec[1])
-            new_path.append(res_vec)
-
-        self.paths.append(new_path)
+        for path in self.defs[path_link]:
+            new_path = []
+            for p in path:
+                res_vec = self.get_vec(p[0] + x, p[1] + y)
+                new_path += [res_vec]
+            self.paths.append(new_path)

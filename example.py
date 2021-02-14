@@ -44,7 +44,7 @@ class StartScene(Scene):
         #
         eq = TexEquation(
             r'\zeta(s)=\int_1^\infty\sum_{n=1}^\infty e^{-\pi n^2x}(x^{s/2}+x^{(1-s)/2})\frac{dx}{x}-\frac{1}{s}-\frac{1}{1-s}',
-            mat=Material(stroke=DARK_BLUE, fill_opacity=1, fill=DARK_BLUE),
+            mat=Material(stroke=DARK_BLUE, fill_opacity=0.3, fill=DARK_BLUE),
             scale=VEC3_NSCALE*0.04
         )
         github = TexText('Github',
@@ -54,22 +54,22 @@ class StartScene(Scene):
                          )
         svg_f = Svg('elephant.svg',
                     mat=Material(stroke=DARK_BLUE, fill_opacity=0.3, fill=DARK_BLUE),
-                    scale=VEC3_NSCALE * 0.2
+                    scale=VEC3_NSCALE * 0.01
                     )
         self.render(
-            ShowCreation(svg_f, speed=0.05),
+            ShowCreation(eq, speed=0.1),
             # Translate(github, VEC3_DOWN * 2),
-            # MorphShape(svg_f, eq)
+            MorphShape(eq, svg_f)
             # RotateFrame(
             #     VEC3_Y_AXIS, 360,
-            #     self.get_objs_frame(svg_f),
+            #     self.get_objs_frame(eq),
             #     speed=0.01
             # ),
         )
         self.add_objs_to_background(svg_f)
         # self.render(ShowCreation(svg_f))
         # self.add_objs_to_background(svg_f)
-        self.pause(0.4)
+        self.pause(0.2)
         # self.add_objs_to_background(svg_f)
         # self.render(
         #     Translate(github, VEC3_DOWN * 1.5),
