@@ -57,16 +57,16 @@ class StartScene(Scene):
                     scale=VEC3_NSCALE * 0.01
                     )
         self.render(
-            ShowCreation(eq, speed=0.1),
+            ShowCreation(eq, speed=0.005),
             # Translate(github, VEC3_DOWN * 2),
-            MorphShape(eq, svg_f)
+            # MorphShape(eq, svg_f)
             # RotateFrame(
             #     VEC3_Y_AXIS, 360,
             #     self.get_objs_frame(eq),
             #     speed=0.01
             # ),
         )
-        self.add_objs_to_background(svg_f)
+        self.add_objs_to_background(eq)
         # self.render(ShowCreation(svg_f))
         # self.add_objs_to_background(svg_f)
         self.pause(0.2)

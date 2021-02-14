@@ -3,6 +3,120 @@ from xml.dom import minidom
 from svgpathtools import parse_path
 from lib.geometry.curves import *
 from lib.math.vector import *
+from lib.material.material import *
+
+
+def get_element_mat(element):
+    return DEFAUT_MAT
+
+
+def get_points_from_str(points_str: str):
+    return re.split(r'[", "]', points_str[1:-1])
+
+
+def get_commands_and_points(path_str: str):
+    path_str = parse_path(path_str).d()
+    pattern = r'["MLHVCSQTAZ"]'
+    paths_str = path_str.split('M')[1:]
+    paths = []
+    for path_s in paths_str:
+        path_s = 'M' + path_s
+        commands = re.findall(pattern, path_s)
+        points = map(get_points_from_str, re.split(pattern, path_s)[1:])
+        paths.append(list(zip(commands, points)))
+    return paths
+
+
+def get_last_vec(path, i):
+    cmd, points = path[i - 1]
+    index = 2
+    if cmd == 'H':
+        s_cmd = 'H'
+        sx = points[0]
+        while s_cmd == 'H':
+            s_cmd, points = path[i - index]
+            index += 1
+        sy = points[-1]
+        return cmd + s_cmd, [sx, sy]
+    elif cmd == 'V':
+        s_cmd = 'V'
+        sy = points[0]
+        while s_cmd == 'V':
+            s_cmd, points = path[i - index]
+            index += 1
+        sx = points[0] if s_cmd == 'H' else points[-2]
+        return cmd + s_cmd, [sx, sy]
+
+    return cmd, points
+
+
+def get_line(path_points, i):
+    cmd, e_points = path_points[i]
+
+    if i == 0:
+        return [vector(*e_points)]
+
+    l_cmd, l_points = get_last_vec(path_points, i)
+    s_vec = vector(l_points[-2], l_points[-1])
+
+    if cmd == 'L':
+        ex, ey = e_points[-2:]
+        return [vector(ex, ey)]
+    elif cmd == 'H':
+        return [vector(*e_points, s_vec[1])]
+    elif cmd == 'V':
+        return [vector(s_vec[0], *e_points)]
+    elif cmd == 'C':
+        c1x, c1y, c2x, c2y, ex, ey = e_points
+        return cubic_path(s_vec, vector(c1x, c1y), vector(c2x, c2y), vector(ex, ey))
+    elif cmd == 'S':
+        c2x, c2y, ex, ey = e_points
+        if l_cmd in ['S', 's', 'C', 'c']:
+            # first control point is the reflection of the last curve's last control point
+            last_end_p = vector(l_points[-2], l_points[-1])
+            last_control_p = vector(l_points[-4], l_points[-3])
+            return cubic_path(
+                s_vec,
+                last_end_p + (last_end_p - last_control_p),
+                vector(c2x, c2y),
+                vector(ex, ey)
+            )
+        else:
+            # else first control point coincides with starting point
+            return cubic_path(
+                s_vec,
+                s_vec,
+                vector(c2x, c2y),
+                vector(ex, ey)
+            )
+    elif cmd == 'Q':
+        mx, my, ex, ey = e_points
+        return quadratic_path(s_vec, vector(mx, my), vector(ex, ey))
+    elif cmd == 'T':
+        # Not Implemented
+        return []
+    elif cmd == 'A':
+        rx, ry, angle_x_axis, large_arc_flag, sweep_flag, ex, ey = e_points
+        return arc_path(
+            s_vec,
+            vector(ex, ey),
+            float(rx),
+            float(ry),
+            float(angle_x_axis),
+            int(large_arc_flag),
+            int(sweep_flag)
+        )
+
+
+def get_path_from_d_path(d_path):
+    paths = get_commands_and_points(d_path)
+    result_paths = []
+    for path in paths:
+        new_path = []
+        for i in range(len(path)):
+            new_path += get_line(path, i)
+        result_paths.append(new_path)
+    return result_paths
 
 
 class Parser(object):
@@ -52,114 +166,12 @@ class Parser(object):
 
         svgDoc.unlink()
 
-    def get_points_from_str(self, points_str: str):
-        return re.split(r'[", "]', points_str[1:-1])
-
-    def get_commands_and_points(self, path_str: str):
-        path_str = parse_path(path_str).d()
-        pattern = r'["MLHVCSQTAZ"]'
-        paths_str = path_str.split('M')[1:]
-        paths = []
-        for path_s in paths_str:
-            path_s = 'M' + path_s
-            commands = re.findall(pattern, path_s)
-            points = map(self.get_points_from_str, re.split(pattern, path_s)[1:])
-            paths.append(list(zip(commands, points)))
-        return paths
-
-    def get_last_vec(self, path, i):
-        cmd, points = path[i - 1]
-        index = 2
-
-        if cmd == 'H':
-            scmd = 'H'
-            sx = points[0]
-            while scmd == 'H':
-                scmd, points = path[i - index]
-                index += 1
-            sy = points[-1]
-            return cmd + scmd, [sx, sy]
-
-        elif cmd == 'V':
-            scmd = 'V'
-            sy = points[0]
-            while scmd == 'V':
-                scmd, points = path[i - index]
-                index += 1
-            sx = points[0] if scmd == 'H' else points[-2]
-            return cmd + scmd, [sx, sy]
-
-        return cmd, points
-
-    def get_line(self, path_points, i):
-        cmd, e_points = path_points[i]
-
-        if i == 0:
-            return [vector(*e_points)]
-        elif cmd == 'Z':
-            return [vector(*path_points[0][1])]
-
-        lcmd, l_points = self.get_last_vec(path_points, i)
-        s_vec = vector(l_points[-2], l_points[-1])
-
-        if cmd == 'L':
-            ex, ey = e_points[-2:]
-            return [vector(ex, ey)]
-        elif cmd == 'H':
-            return [vector(*e_points, s_vec[1])]
-        elif cmd == 'V':
-            return [vector(s_vec[0], *e_points)]
-        elif cmd == 'C':
-            c1x, c1y, c2x, c2y, ex, ey = e_points
-            return cubic_path(s_vec, vector(c1x, c1y), vector(c2x, c2y), vector(ex, ey))
-        elif cmd == 'S':
-            c2x, c2y, ex, ey = e_points
-            if lcmd in ['S', 's', 'C', 'c']:
-                # first control point is the reflection of the last curve's last control point
-                last_end_p = vector(l_points[-2], l_points[-1])
-                last_control_p = vector(l_points[-4], l_points[-3])
-                return cubic_path(
-                    s_vec,
-                    last_end_p + (last_end_p - last_control_p),
-                    vector(c2x, c2y),
-                    vector(ex, ey)
-                )
-            else:
-                # else first control point coincides with starting point
-                return cubic_path(
-                    s_vec,
-                    s_vec,
-                    vector(c2x, c2y),
-                    vector(ex, ey)
-                )
-        elif cmd == 'Q':
-            mx, my, ex, ey = e_points
-            return quadratic_path(s_vec, vector(mx, my), vector(ex, ey))
-        elif cmd == 'T':
-            # Not Implemented
-            return []
-        elif cmd == 'A':
-            rx, ry, angle_x_axis, large_arc_flag, sweep_flag, ex, ey = e_points
-            return arc_path(
-                s_vec,
-                vector(ex, ey),
-                float(rx),
-                float(ry),
-                float(angle_x_axis),
-                int(large_arc_flag),
-                int(sweep_flag)
-            )
-
-    def get_path_from_d_path(self, d_path):
-        paths = self.get_commands_and_points(d_path)
-        result_paths = []
-        for path in paths:
-            new_path = []
-            for i in range(len(path)):
-                new_path += self.get_line(path, i)
-            result_paths.append(new_path)
-        # [[result_path.extend(self.get_line(path, i)) for i in range(len(path))] for path in paths]
-        return result_paths
+    def get_vec(self, x, y):
+        return vector(
+            x * self.x_pix + self.x_off - (self.width / 2),
+            -(y * self.y_pix + self.y_off - (self.height / 2)),
+            0
+        )
 
     def get_paths_from_svg(self, element):
         if not isinstance(element, minidom.Element):
@@ -181,7 +193,7 @@ class Parser(object):
         elif element.tagName in ['defs', 'svg', 'symbol']:
             [self.get_defs_from_svg(child) for child in element.childNodes]
         elif element.getAttribute('id') and element.tagName == 'path':
-            self.defs[element.getAttribute('id')] = self.get_path_from_d_path(element.getAttribute('d'))
+            self.defs[element.getAttribute('id')] = get_path_from_d_path(element.getAttribute('d'))
 
     def add_circle(self, circle_element):
         pass
@@ -192,28 +204,22 @@ class Parser(object):
         width = float(rect_element.getAttribute('width'))
         height = float(rect_element.getAttribute('height'))
 
-        lup = self.get_vec(x, y)
-        rdown = self.get_vec(x + width, y + height)
-        rup = self.get_vec(x + width, y)
-        ldown = self.get_vec(x, y + height)
+        l_up = self.get_vec(x, y)
+        r_down = self.get_vec(x + width, y + height)
+        r_up = self.get_vec(x + width, y)
+        l_down = self.get_vec(x, y + height)
 
-        self.paths.append([rdown, rup, lup, ldown, rdown])
+        self.paths.append([r_down, r_up, l_up, l_down, r_down])
 
     def add_path(self, path_element):
-        paths = self.get_path_from_d_path(path_element.getAttribute('d'))
+        paths = get_path_from_d_path(path_element.getAttribute('d'))
+
         for path in paths:
             new_path = []
             for p in path:
                 res_vec = self.get_vec(p[0], p[1])
                 new_path += [res_vec]
             self.paths.append(new_path)
-
-    def get_vec(self, x, y):
-        return vector(
-            x * self.x_pix + self.x_off - (self.width / 2),
-            -(y * self.y_pix + self.y_off - (self.height / 2)),
-            0
-        )
 
     def add_use(self, use_element):
         x = float(use_element.getAttribute('x'))
