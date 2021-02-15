@@ -1,5 +1,4 @@
 import hashlib
-
 from lib.file.constants import *
 
 

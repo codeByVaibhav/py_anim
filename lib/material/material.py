@@ -8,12 +8,12 @@ from lib.math.vector import *
 class Material(object):
     def __init__(
             self,
-            fill=BLACK,
-            stroke=ORANGE,
-            stroke_width=2,
-            stroke_dasharray=VEC2_ZERO,
-            fill_opacity=0.0,
-            stroke_opacity=1.0
+            fill: np.ndarray = BLACK,
+            stroke: np.ndarray = ORANGE,
+            stroke_width: int = 2,
+            stroke_dasharray: np.ndarray = VEC2_ZERO,
+            fill_opacity: float = 0.0,
+            stroke_opacity: float = 1.0
     ):
         self.fill = fill
         self.stroke = stroke
