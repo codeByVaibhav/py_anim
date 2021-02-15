@@ -8,14 +8,6 @@ from lib.file.constants import *
 from lib.material.material import *
 from lib.math.quaternion import *
 
-svg = f'''\
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 WIDTH HEIGHT">
-<rect width="100%" height="100%" fill="black" />
-<!--  <path d="M960 0L960 1080" stroke="red"/>  -->
-<!--  <path d="M0 540L1920 540" stroke="red"/>  -->
-
-'''
-
 
 class Camera(object):
     def __init__(self, width=1920, height=1080, pos=vector(0, 0, 8), rot=QUAT_IDEN, scale=vector(1, 1, 1)):
@@ -64,27 +56,20 @@ class Scene(object):
     ):
         self.unit_time = 1 / fps
         self.fps = fps
-
         self.camera = Camera(width=width, height=height)
-
         self.width = width
         self.height = height
         self.quality = quality
-
-        self.svg_header = svg.replace('WIDTH', str(width))
-        self.svg_header = self.svg_header.replace('HEIGHT', str(height))
-        self.svg_end = '\n</svg>'
         self.frames = []
         self.svg_frames = []
         self.background_frame = []
-
         self.begin()
         self.end()
 
     def begin(self):
         '''
         This function starts the scene.
-        Should be implemented by child object.
+        Should be implemented by child class.
         '''
         pass
 
@@ -239,7 +224,10 @@ class Scene(object):
                     mat=mat
                 ) for mat, path in frame
             ]
-            svg_frame = self.svg_header + '\n'.join(svg_paths) + self.svg_end
+            svg_frame = SVG_TEMP_TXT.replace(
+                'WIDTH HEIGHT',
+                f'{self.width} {self.height}'
+            ).replace(TEXT_TO_REPLACE, '\n'.join(svg_paths))
             svg2png(bytestring=svg_frame, write_to=ffmpeg_cmd.stdin)
             # write_svg(VIDEO_DIR + f"\\{i + 1}.svg", svg_frame)
 
