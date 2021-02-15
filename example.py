@@ -26,10 +26,6 @@ class StartScene(Scene):
     def begin(self):
         self.camera.pos = vector(0, 0, 4)
 
-        # text = TexEquation(
-        #     r'Integral $\int_{a}^{b} x^2 \,dx$ inside text',
-        #     mat=Material(stroke=DARK_BLUE, stroke_width=2, fill_opacity=1.0, fill=DARK_BLUE),
-        # )
         # cube = Cuboid(1, 1, 1, mat=Material(
         #     stroke=DARK_BLUE, stroke_width=8))
 
