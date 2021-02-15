@@ -1,8 +1,6 @@
 import os
 import time
 
-# ffmpeg -r 60 -i .\\pngFrames\\%02d.png -c:v libx264 -vf fps=0.01 -threads 16 -pix_fmt yuv420p out.mp4
-
 TEXT_TO_REPLACE = "YourText"
 
 START_TIME = time.strftime(f"%Y-%m-%d-%H-%M-%S")
