@@ -219,19 +219,20 @@ class Scene(object):
         command = " ".join([
             'ffmpeg',
             '-y',  # overwrite output file if it exists
-            '-vsync 0',
-            '-hwaccel cuda -hwaccel_output_format cuda',
+            '-vsync', '0',
+            '-hwaccel', 'cuda',
+            '-hwaccel_output_format', 'cuda',
             '-f', 'image2pipe',
             '-s', f'{self.width}x{self.height}',  # size of one frame
-            '-i -',  # Input comes from a pipe
+            '-i', '-',  # Input comes from a pipe
             '-an',  # expect no audio file
-            '-loglevel error',
-            '-c:v h264_nvenc',  # video codec
-            f'-vf fps={self.fps}',
-            # '-threads 32',
-            '-pix_fmt yuv420p',
-            f'-b:v {self.quality}',  # video quality
-            f'{VIDEO_DIR}\\out.mp4',
+            '-loglevel', 'error',
+            '-c:v', 'h264_nvenc',  # video codec
+            '-vf', f'fps={self.fps}',  # video fps
+            '-threads', '16',
+            '-pix_fmt', 'yuv420p',
+            '-b:v', f'{self.quality}',  # video quality
+            f'{VIDEO_DIR}\\out.mp4',  # output file
         ])
         ffmpeg_cmd = sp.Popen(command, stdin=sp.PIPE)
 
