@@ -253,5 +253,5 @@ class Scene(object):
 
 
 def write_svg(file, frame):
-    with open(file, 'w') as f:
-        f.write(frame)
+    with open(file, 'w') as opened_file:
+        opened_file.write(frame)
