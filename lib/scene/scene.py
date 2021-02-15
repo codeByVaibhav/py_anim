@@ -2,15 +2,11 @@ import copy
 
 from cairosvg import svg2png
 from tqdm import tqdm
+import subprocess as sp
 
 from lib.file.constants import *
 from lib.material.material import *
 from lib.math.quaternion import *
-
-import shlex
-import subprocess as sp
-from io import BytesIO
-from touch import touch
 
 svg = f'''\
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 WIDTH HEIGHT">
