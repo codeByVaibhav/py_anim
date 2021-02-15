@@ -2,19 +2,14 @@ import copy
 
 from cairosvg import svg2png
 from tqdm import tqdm
+import subprocess as sp
 
 from lib.file.constants import *
 from lib.material.material import *
 from lib.math.quaternion import *
 
-import shlex
-import subprocess
-from io import BytesIO
-from touch import touch
-
 svg = f'''\
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 WIDTH HEIGHT">
-
 <rect width="100%" height="100%" fill="black" />
 <!--  <path d="M960 0L960 1080" stroke="red"/>  -->
 <!--  <path d="M0 540L1920 540" stroke="red"/>  -->
@@ -63,6 +58,7 @@ class Scene(object):
             self,
             width=1920,
             height=1080,
+            quality='5M',
             fps=24,
             **kwargs
     ):
@@ -70,6 +66,10 @@ class Scene(object):
         self.fps = fps
 
         self.camera = Camera(width=width, height=height)
+
+        self.width = width
+        self.height = height
+        self.quality = quality
 
         self.svg_header = svg.replace('WIDTH', str(width))
         self.svg_header = self.svg_header.replace('HEIGHT', str(height))
@@ -212,6 +212,26 @@ class Scene(object):
     def end(self):
         print('Processing all Frames.')
 
+        command = " ".join([
+            'ffmpeg',
+            '-y',  # overwrite output file if it exists
+            '-vsync', '0',
+            '-hwaccel', 'cuda',
+            '-hwaccel_output_format', 'cuda',
+            '-f', 'image2pipe',
+            '-s', f'{self.width}x{self.height}',  # size of one frame
+            '-i', '-',  # Input comes from a pipe
+            '-an',  # expect no audio file
+            '-loglevel', 'error',
+            '-c:v', 'h264_nvenc',  # video codec
+            '-vf', f'fps={self.fps}',  # video fps
+            '-threads', '16',
+            '-pix_fmt', 'yuv420p',
+            '-b:v', f'{self.quality}',  # video quality
+            f'{VIDEO_DIR}\\out.mp4',  # output file
+        ])
+        ffmpeg_cmd = sp.Popen(command, stdin=sp.PIPE)
+
         for i, frame in enumerate(tqdm(self.frames)):
             svg_paths = [
                 self.get_svg_path(
@@ -219,76 +239,15 @@ class Scene(object):
                     mat=mat
                 ) for mat, path in frame
             ]
-
             svg_frame = self.svg_header + '\n'.join(svg_paths) + self.svg_end
-            # write_svg(FRAMES_DIR + f"\\{i + 1}.svg", svg_frame)
-            png_file = FRAMES_DIR + f"\\{i + 1}.png"
-            # file_like = BytesIO()
-            svg2png(bytestring=svg_frame, write_to=png_file)
-            # vb = from_bytes_to_bytes(file_like.read(), 60)
-            # from_bytes_to_file(vb, 60)
-            # img = svg2png(bytestring=svg_frame)
-            # imgs.append(img)
+            svg2png(bytestring=svg_frame, write_to=ffmpeg_cmd.stdin)
+            # write_svg(VIDEO_DIR + f"\\{i + 1}.svg", svg_frame)
 
-        # -hide_banner -nostats -loglevel 0
-        cmd_hi = f'ffmpeg -y -vsync 0 -hwaccel cuda -hwaccel_output_format cuda -i {FRAMES_DIR}\\%0d.png -c:v h264_nvenc -vf fps={self.fps} -threads 16 -pix_fmt yuv420p -b:v 15M {VIDEO_DIR}\\out.mp4'
-        cmd_low = f'ffmpeg -y -vsync 0 -hwaccel cuda -hwaccel_output_format cuda -i {FRAMES_DIR}\\%0d.png -c:v h264_nvenc -vf fps={self.fps} -threads 16 -pix_fmt yuv420p -b:v 5M {VIDEO_DIR}\\out.mp4'
-        os.system(cmd_low)
+        ffmpeg_cmd.stdin.close()
+        ffmpeg_cmd.wait()
         os.system(f'{VIDEO_DIR}\\out.mp4')
 
 
 def write_svg(file, frame):
-    with open(file, 'w') as f:
-        f.write(frame)
-
-
-def from_bytes_to_file(
-        input_bytes: bytes,
-        fps: int,
-) -> bytes or None:
-    input_cmd = 'ffmpeg -y -vsync 0 -hwaccel cuda -hwaccel_output_format cuda'
-    output_cmd = f'-c:v h264_nvenc -vf fps={fps} -threads 16 -pix_fmt yuv420p -b:v 15M'
-
-    # if not os.path.exists(f'{VIDEO_DIR}\\out.mp4'):
-    #     touch(f'{VIDEO_DIR}\\out.mp4')
-    out_file = '"' + f'{VIDEO_DIR}\\out.mp4' + '"'
-    command = f'ffmpeg -i "concat:pipe:0|{out_file}" -c copy {out_file}'
-    ffmpeg_cmd = subprocess.Popen(
-        shlex.split(command),
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        shell=False
-    )
-    ffmpeg_cmd.communicate(input_bytes)
-
-
-def from_bytes_to_bytes(
-        input_bytes: bytes,
-        fps: int,
-) -> bytes or None:
-    input_cmd = '-loop 1'
-    output_cmd = f'-c:v libx264 -t 0.0166 -pix_fmt yuv420p'
-
-    # if not os.path.exists(f'{VIDEO_DIR}\\out.mp4'):
-    #     touch(f'{VIDEO_DIR}\\out.mp4')
-    command = f'ffmpeg {input_cmd} -hide_banner -nostats -loglevel 0 -i pipe:0 {output_cmd} -'
-    ffmpeg_cmd = subprocess.Popen(
-        shlex.split(command),
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        shell=False
-    )
-    b = b''
-    # write bytes to processe's stdin and close the pipe to pass
-    # data to piped process
-    ffmpeg_cmd.stdin.write(input_bytes)
-    ffmpeg_cmd.stdin.close()
-    while True:
-        output = ffmpeg_cmd.stdout.read()
-        if len(output) > 0:
-            b += output
-        else:
-            error_msg = ffmpeg_cmd.poll()
-            if error_msg is not None:
-                break
-    return b
+    with open(file, 'w') as opened_file:
+        opened_file.write(frame)
