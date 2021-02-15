@@ -1,6 +1,4 @@
-from lib.math.interpolation import lerp
 from lib.scene_obj.scene_obj import *
-from lib.tex.svg_parser import *
 from lib.tex.tex_to_svg import tex_to_svg_file
 from lib.svg.svg import Parser
 
