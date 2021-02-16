@@ -40,5 +40,4 @@ VIDEO_DIR = ".\\out\\" + START_TIME
 VIDEO_DIR = os.path.abspath(VIDEO_DIR)
 
 os.mkdir(VIDEO_DIR)
-
 # endregion

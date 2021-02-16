@@ -3,11 +3,6 @@ from xml.dom import minidom
 from svgpathtools import parse_path
 from lib.geometry.curves import *
 from lib.math.vector import *
-from lib.material.material import *
-
-
-def get_element_mat(element):
-    return DEFAUT_MAT
 
 
 def get_points_from_str(points_str: str):
@@ -29,23 +24,24 @@ def get_commands_and_points(path_str: str):
 
 def get_last_vec(path, i):
     cmd, points = path[i - 1]
-    index = 2
-    if cmd == 'H':
-        s_cmd = 'H'
-        sx = points[0]
-        while s_cmd == 'H':
-            s_cmd, points = path[i - index]
-            index += 1
-        sy = points[-1]
-        return cmd + s_cmd, [sx, sy]
-    elif cmd == 'V':
-        s_cmd = 'V'
-        sy = points[0]
-        while s_cmd == 'V':
-            s_cmd, points = path[i - index]
-            index += 1
-        sx = points[0] if s_cmd == 'H' else points[-2]
-        return cmd + s_cmd, [sx, sy]
+    # The below code (commented) is not required as H and V commands are eliminate using parse_path :)
+    # index = 2
+    # if cmd == 'H':
+    #     s_cmd = 'H'
+    #     sx = points[0]
+    #     while s_cmd == 'H':
+    #         s_cmd, points = path[i - index]
+    #         index += 1
+    #     sy = points[-1]
+    #     return cmd + s_cmd, [sx, sy]
+    # elif cmd == 'V':
+    #     s_cmd = 'V'
+    #     sy = points[0]
+    #     while s_cmd == 'V':
+    #         s_cmd, points = path[i - index]
+    #         index += 1
+    #     sx = points[0] if s_cmd == 'H' else points[-2]
+    #     return cmd + s_cmd, [sx, sy]
 
     return cmd, points
 
@@ -62,10 +58,11 @@ def get_line(path_points, i):
     if cmd == 'L':
         ex, ey = e_points[-2:]
         return [vector(ex, ey)]
-    elif cmd == 'H':
-        return [vector(*e_points, s_vec[1])]
-    elif cmd == 'V':
-        return [vector(s_vec[0], *e_points)]
+    # The below code (commented) is not required as H and V commands are eliminate using parse_path :)
+    # elif cmd == 'H':
+    #     return [vector(*e_points, s_vec[1])]
+    # elif cmd == 'V':
+    #     return [vector(s_vec[0], *e_points)]
     elif cmd == 'C':
         c1x, c1y, c2x, c2y, ex, ey = e_points
         return cubic_path(s_vec, vector(c1x, c1y), vector(c2x, c2y), vector(ex, ey))
