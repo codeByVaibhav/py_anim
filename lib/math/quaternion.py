@@ -11,33 +11,32 @@ def H(a, b):
     ])
 
 
+# Same as above function but using numpy.dot function
 def H2(a, b):
-    mat = np.array([
-        # w       #x     #y     #z
+    return a.dot([
         [b[0], b[1], b[2], b[3]],
         [-b[1], b[0], -b[3], b[2]],
         [-b[2], b[3], b[0], -b[1]],
         [-b[3], -b[2], b[1], b[0]],
     ])
-    return a.dot(mat)
 
 
 class Quaternion(object):
     def __init__(
             self,
-            axis_of_rotaiton,
+            axis_of_rotation,
             angel: float,
             angel_in_radians=False
     ):
-        if angel_in_radians == False:
+        if not angel_in_radians:
             angel *= (np.pi / 180)
 
-        self.axis = axis_of_rotaiton
+        self.axis = axis_of_rotation
         self.angel = angel
         w = math.cos(angel / 2)
-        x = axis_of_rotaiton[0] * math.sin(angel / 2)
-        y = axis_of_rotaiton[1] * math.sin(angel / 2)
-        z = axis_of_rotaiton[2] * math.sin(angel / 2) if len(axis_of_rotaiton) > 2 else 0
+        x = axis_of_rotation[0] * math.sin(angel / 2)
+        y = axis_of_rotation[1] * math.sin(angel / 2)
+        z = axis_of_rotation[2] * math.sin(angel / 2) if len(axis_of_rotation) > 2 else 0
 
         mag = math.sqrt(w ** 2 + x ** 2 + y ** 2 + z ** 2)
 
@@ -46,12 +45,11 @@ class Quaternion(object):
         y /= mag
         z /= mag
 
-        # self.wxyz = np.array([w, x, y, z], dtype=np.float64)
         self.wxyz = vector(w, x, y, z)
 
     def __mul__(self, o):
         r = Quaternion(VEC3_ZERO, 0)
-        r.wxyz = H(self.wxyz, o.wxyz)
+        r.wxyz = H2(self.wxyz, o.wxyz)
         return r
 
     def __str__(self):
@@ -60,11 +58,10 @@ class Quaternion(object):
     def rotate(self, vec):
         q_ = self.wxyz * -1
         q_[0] *= -1
-        # v = np.array([0, vec[0], vec[1], vec[2]], dtype=np.float64)
-        v = vector(0, vec[0], vec[1], vec[2])
-        r = H(H(self.wxyz, v), q_)
+        v = vector(0, *vec)
+        r = H2(H2(self.wxyz, v), q_)
 
-        return vector(r[1], r[2], r[3])
+        return vector(*r[1:])
 
 
 QUAT_IDEN = Quaternion(VEC3_ZERO, 0)

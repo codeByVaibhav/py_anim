@@ -10,7 +10,7 @@ from lib.math.quaternion import *
 
 
 class Camera(object):
-    def __init__(self, width=1920, height=1080, pos=vector(0, 0, 8), rot=QUAT_IDEN, scale=vector(1, 1, 1)):
+    def __init__(self, width=1920, height=1080, pos=vector(0, 0, 4), rot=QUAT_IDEN, scale=vector(1, 1, 1)):
         self.pos = pos
         self.rot = rot
         self.scale = scale
@@ -51,12 +51,13 @@ class Scene(object):
             width=1920,
             height=1080,
             quality='5M',
-            fps=24,
+            fps=60,
+            cam_pos=vector(0, 0, 4),
             **kwargs
     ):
         self.unit_time = 1 / fps
         self.fps = fps
-        self.camera = Camera(width=width, height=height)
+        self.camera = Camera(width=width, height=height, pos=cam_pos)
         self.width = width
         self.height = height
         self.quality = quality
