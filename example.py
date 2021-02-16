@@ -48,7 +48,7 @@ class StartScene(Scene):
                          # pos=VEC3_DOWN * 2
                          scale=VEC3_NSCALE * 0.1
                          )
-        svg_f = Svg('elephant.svg',
+        svg_f = Svg('test.svg',
                     mat=Material(stroke=DARK_BLUE, fill_opacity=0.3, fill=DARK_BLUE),
                     scale=VEC3_NSCALE * 0.01
                     )
