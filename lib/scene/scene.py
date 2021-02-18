@@ -41,8 +41,16 @@ class Camera(object):
             proj_p /= proj_p[-1]
             out_p = vector(proj_p[0], -proj_p[1]) + vector(1, 1)
             out_p *= self.center_coordinate
-            projected_path.append(out_p)
+            projected_path.append(vector(*out_p, 0))
         return projected_path
+
+    def get_projected_point(self, p):
+        p = (self.rot.rotate(p) + self.pos) * self.scale
+        proj_p = np.array([p[0], p[1], p[2], 1]).dot(self.proj_mat)
+        proj_p /= proj_p[-1]
+        out_p = vector(proj_p[0], -proj_p[1]) + vector(1, 1)
+        out_p *= self.center_coordinate
+        return vector(*out_p, 0)
 
 
 class Scene(object):
@@ -61,6 +69,7 @@ class Scene(object):
         self.width = width
         self.height = height
         self.quality = quality
+        self.output_file = os.path.join(VIDEO_DIR, 'out.mp4')
         self.frames = []
         self.svg_frames = []
         self.background_frame = []
@@ -138,17 +147,17 @@ class Scene(object):
 
         return merged_frame
 
-    def pause(self, time, frame=None):
+    def pause(self, pause_time, frame=None):
         '''
         if frame is None than background is rendered at pause time
         '''
         if frame is None:
-            while time > 0:
-                time -= self.unit_time
+            while pause_time > 0:
+                pause_time -= self.unit_time
                 self.frames.append(self.background_frame)
         else:
-            while time > 0:
-                time -= self.unit_time
+            while pause_time > 0:
+                pause_time -= self.unit_time
                 self.frames += self.get_sorted_frame(
                     self.insert_background_to_frames(frame)
                 )
@@ -165,9 +174,8 @@ class Scene(object):
 
     def add_objs_to_background(self, *objs):
         for obj in objs:
-            mat, paths = obj.get_mat_and_paths()
-            self.background_frame += [(mat, path) for path in paths]
-        self.background_frame = self.get_sorted_frame(self.background_frame)
+            self.background_frame += obj.get_mat_and_paths()
+        # self.background_frame = self.get_sorted_frame(self.background_frame)
 
     def get_objs_frame(self, *objs):
         frame = []
@@ -191,10 +199,6 @@ class Scene(object):
     def get_sorted_frames(self, frames):
         return [self.get_sorted_frame(frame) for frame in frames]
 
-    def get_svg_path(self, path, mat=DEFAUT_MAT):
-        d = 'M' + "".join(f'L{i[0]} {i[1]}' for i in path)[1:]
-        return f'<path d="{d}" {mat}/>'
-
     def end(self):
         print('Processing all Frames.')
 
@@ -214,27 +218,26 @@ class Scene(object):
             '-threads', '16',
             '-pix_fmt', 'yuv420p',
             '-b:v', f'{self.quality}',  # video quality
-            f'{VIDEO_DIR}\\out.mp4',  # output file
+            f'{self.output_file}',  # output file
         ])
+
         ffmpeg_cmd = sp.Popen(command, stdin=sp.PIPE)
 
         for i, frame in enumerate(tqdm(self.frames)):
-            svg_paths = [
-                self.get_svg_path(
-                    self.camera.get_projected_path(path),
-                    mat=mat
-                ) for mat, path in frame
-            ]
+            svg_paths = '\n'.join([
+                str(path_obj.apply_func(self.camera.get_projected_point))
+                for path_obj in frame
+            ])
             svg_frame = SVG_TEMP_TXT.replace(
                 'WIDTH HEIGHT',
                 f'{self.width} {self.height}'
-            ).replace(TEXT_TO_REPLACE, '\n'.join(svg_paths))
+            ).replace(TEXT_TO_REPLACE, svg_paths)
             svg2png(bytestring=svg_frame, write_to=ffmpeg_cmd.stdin)
             # write_svg(VIDEO_DIR + f"\\{i + 1}.svg", svg_frame)
 
         ffmpeg_cmd.stdin.close()
         ffmpeg_cmd.wait()
-        os.system(f'{VIDEO_DIR}\\out.mp4')
+        os.system(self.output_file)
 
 
 def write_svg(file, frame):

@@ -12,53 +12,8 @@ class Animation(object):
         pass
 
 
-class MorphShape(Animation):
-    def __init__(
-        self,
-        startObj,
-        endObj,
-        no_of_points=200,
-        speed=0.0625
-    ):
-        super().__init__()
-        self.speed = speed
-        self.no_of_points = no_of_points
-
-        self.startObj = startObj.copy()
-        self.endObj = endObj.copy()
-
-    def progress(self):
-        per = -self.speed
-        final_frames = []
-
-        smat, spaths = self.startObj.get_mat_and_paths()
-        emat, epaths = self.endObj.get_mat_and_paths()
-
-        spaths, epaths = get_equal_len_paths(spaths, epaths)
-
-        spaths = [path_linspace(p) for p in spaths]
-        epaths = [path_linspace(p) for p in epaths]
-
-        while per <= 1:
-            per += self.speed
-            nper = smooth(per)
-            frame = []
-
-            for spath, epath in zip(spaths, epaths):
-                mpath = [lerp(s, e, nper) for s, e, in zip(spath, epath)]
-                mmat = smat.lerp(emat, nper)
-                frame.append((mmat, mpath))
-
-            final_frames.append(frame)
-        return final_frames
-
-
 class ShowCreation(Animation):
-    def __init__(
-            self,
-            obj,
-            speed=0.0625
-    ):
+    def __init__(self, obj, speed=0.0625):
         super().__init__()
         self.speed = speed
         self.obj = obj.copy()
@@ -67,33 +22,78 @@ class ShowCreation(Animation):
         per = -self.speed
         final_frames = []
 
-        mat, paths = self.obj.get_mat_and_paths()
+        path_objects = self.obj.get_mat_and_paths()
 
-        final_mat = mat.copy()
-        mat.fill_opacity = 0
-
-        alpha = (len(paths) - 1) / 50
+        alpha = (len(path_objects) - 1) / 50
         while per - alpha <= 1:
             per += self.speed
 
-            frame = [
-                (
-                    mat, lerp_path(path, smooth(per - (i / 50)))
-                ) for i, path in enumerate(paths)
-            ]
+            frame = []
+
+            for i, path_obj in enumerate(path_objects):
+                n_per = smooth(per - (i / 50))
+                po = path_obj.lerp(n_per)
+                po.mat.fill_opacity = 0
+                frame.append(po)
 
             final_frames.append(frame)
 
-        if final_mat.fill_opacity != 0:
-            per = -self.speed
-            while per <= 1:
-                per += self.speed * 2
-                nper = smooth(per)
+        per = -self.speed
+        while per <= 1:
+            per += self.speed * 2
+            n_per = smooth(per)
 
-                frame = [(mat.lerp(final_mat, nper), path) for path in paths]
+            frame = []
 
-                final_frames.append(frame)
+            for i, path_obj in enumerate(path_objects):
+                path_obj = path_obj.copy()
+                path_obj.mat.fill_opacity = lerp(0, path_obj.mat.fill_opacity, n_per)
+                frame.append(path_obj)
 
+            final_frames.append(frame)
+
+        return final_frames
+
+
+class MorphShape(Animation):
+    def __init__(
+        self,
+        start_obj,
+        end_obj,
+        no_of_points=100,
+        speed=0.0625
+    ):
+        super().__init__()
+        self.speed = speed
+        self.no_of_points = no_of_points
+
+        self.start_obj = start_obj.copy()
+        self.end_obj = end_obj.copy()
+
+    def progress(self):
+        per = -self.speed
+        final_frames = []
+
+        s_paths = self.start_obj.get_mat_and_paths()
+        e_paths = self.end_obj.get_mat_and_paths()
+        final_frame_paths = self.end_obj.get_mat_and_paths()
+
+        # Make the paths of equal lengths
+        if len(s_paths) < len(e_paths):
+            s_paths = s_paths * (len(e_paths) // len(s_paths)) + s_paths[:len(e_paths) % len(s_paths)]
+        elif len(e_paths) < len(s_paths):
+            e_paths = e_paths * (len(s_paths) // len(e_paths)) + e_paths[:len(s_paths) % len(e_paths)]
+        # Make each path of same size
+        s_paths = [path.linspace(self.no_of_points) for path in s_paths]
+        e_paths = [path.linspace(self.no_of_points) for path in e_paths]
+
+        while per <= 1:
+            per += self.speed
+            n_per = smooth(per)
+            frame = [s_path.lerp_to_path(e_path, n_per) for s_path, e_path in zip(s_paths, e_paths)]
+            final_frames.append(frame)
+
+        final_frames.append(final_frame_paths)
         return final_frames
 
 

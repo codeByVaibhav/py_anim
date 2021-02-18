@@ -12,10 +12,10 @@ class TexText(SceneObj):
         self.width = parsed_svg.width
         self.height = parsed_svg.height
 
+    def apply_transform(self, point):
+        return (self.rot.rotate(point) + self.pos) * self.scale
+
     def get_mat_and_paths(self):
-        return (
-            self.mat,
-            [
-                [(self.rot.rotate(p) + self.pos) * self.scale for p in path] for path in self.paths
-            ]
-        )
+        return [
+            path_obj.apply_func(self.apply_transform) for path_obj in self.paths
+        ]
