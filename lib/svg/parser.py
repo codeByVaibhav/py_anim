@@ -1,15 +1,24 @@
 import re
 from copy import deepcopy
 from xml.dom import minidom
-
+from random import randint
 from svgpathtools import parse_path
 
 from lib.geometry.curves import *
 from lib.material.material import *
 
+SUB_PATH_MAT = Material(
+    fill=BLACK,
+    stroke=WHITE,
+    stroke_width=1,
+    fill_opacity=0,
+    stroke_opacity=1,
+    stroke_dasharray=VEC2_ZERO,
+)
+
 
 class Path:
-    def __init__(self, cmd_point: list, mat: Material = DEFAUT_MAT):
+    def __init__(self, cmd_point: list, mat: Material):
         self.cmd_point: list = cmd_point
         self.mat = mat
 
@@ -41,18 +50,35 @@ class Path:
     def copy(self):
         return deepcopy(self)
 
-    def get_path_of_size(self, s: int):
-        return Path(
-            self.cmd_point + [self.cmd_point[-1]] * (s - len(self.cmd_point)),
-            mat=self.mat.copy()
-        )
+    def get_subpaths(self, mat=SUB_PATH_MAT):
+
+        m_list = list(filter(lambda x: x[1][0] == 'M', enumerate(self)))
+        paths = []
+        for i in range(len(m_list)):
+            try:
+                paths.append(
+                    Path(
+                        self.cmd_point[m_list[i][0]: m_list[i + 1][0]],
+                        mat=mat.copy()
+                    )
+                )
+            except IndexError as e:
+                paths.append(
+                    Path(
+                        self.cmd_point[m_list[i][0]:],
+                        mat=mat.copy()
+                    )
+                )
+
+        return paths
 
     def linspace(self, no_of_points=100):
+        assert no_of_points >= 1
         if len(self) == no_of_points:
-            return Path(self.cmd_point[:], mat=self.mat.copy())
+            return self.copy()
 
         new_path = Path(
-            [self.lerp(1 / no_of_points * n, get_last_cp=True) for n in range(no_of_points + 1)],
+            [self.lerp(1 / no_of_points * n, get_last_cp=True) for n in range(1, no_of_points + 1)],
             mat=self.mat.copy()
         )
 
@@ -65,6 +91,7 @@ class Path:
     def lerp(self, per, get_last_cp=False):
         """
         Returns a new Path object which has path only unto percentage given to function.
+        if get_last_cp is true the only the last point is returned
         """
         if per <= 0:
             if get_last_cp:
@@ -86,19 +113,17 @@ class Path:
 
         return Path([*self.cmd_point[:last_point + 1], last_p], mat=self.mat.copy())
 
-    def apply_func(self, func):
-        return Path([(cmd, func(p)) for cmd, p in self], mat=self.mat.copy())
-
     def lerp_to_path(self, path, percentage: float):
         assert len(path) == len(self)
-        new_cmd_path = []
-        for (cmd, p), (cmd2, p2) in zip(self, path):
-            if cmd == 'M' or cmd2 == 'M':
-                new_cmd_path += [('M', lerp(p, p2, percentage))]
-            else:
-                new_cmd_path += [('L', lerp(p, p2, percentage))]
+        new_cmd_path = [
+            ('M' if cmd == 'M' or cmd2 == 'M' else 'L', lerp(p, p2, percentage))
+            for (cmd, p), (cmd2, p2) in zip(self, path)
+        ]
 
         return Path(new_cmd_path, mat=self.mat.lerp(path.mat, percentage))
+
+    def apply_func(self, func):
+        return Path([(cmd, func(p)) for cmd, p in self], mat=self.mat.copy())
 
     def __repr__(self):
         return f'<path d="{self.d()}" {self.mat}/>'
@@ -185,14 +210,34 @@ def get_cmd_points(path_points, i):
     return [('L', vector(*p, 0)) for p in path]
 
 
-def get_path_obj_from_d_path(d_path):
-    paths_and_commands = get_commands_and_points(d_path)
-    path_obj = Path([])
-    for i in range(len(paths_and_commands)):
-        path_obj.extend(
-            get_cmd_points(paths_and_commands, i)
-        )
-    return path_obj
+def get_element_material(element):
+    fill = element.getAttribute('fill')
+    stroke = element.getAttribute('stroke')
+    stroke_width = element.getAttribute('stroke-width')
+    stroke_opacity = element.getAttribute('stroke-opacity')
+    fill_opacity = element.getAttribute('fill-opacity')
+
+    if '#' in fill:
+        fill = hex_to_rgb(fill)
+    else:
+        fill = DARK_BLUE
+    if '#' in stroke:
+        stroke = hex_to_rgb(stroke)
+    else:
+        stroke = WHITE
+
+    fill_opacity = 1 if fill_opacity == '' else float(fill_opacity)
+    stroke_opacity = 1 if stroke_opacity == '' else float(stroke_opacity)
+    stroke_width = 0 if stroke_width == '' else float(stroke_width)
+
+    return Material(
+        fill=fill,
+        stroke=stroke,
+        stroke_width=stroke_width,
+        fill_opacity=fill_opacity,
+        stroke_opacity=stroke_opacity,
+        stroke_dasharray=VEC2_ZERO,
+    )
 
 
 class Parser(object):
@@ -269,7 +314,7 @@ class Parser(object):
         elif element.tagName in ['defs', 'svg', 'symbol']:
             [self.get_defs_from_svg(child) for child in element.childNodes]
         elif element.getAttribute('id') and element.tagName == 'path':
-            self.defs[element.getAttribute('id')] = get_path_obj_from_d_path(element.getAttribute('d'))
+            self.defs[element.getAttribute('id')] = self.add_path(element, add_path_to_self=False)
 
     def add_circle(self, circle_element):
         pass
@@ -288,17 +333,26 @@ class Parser(object):
         path_obj = Path(
             [
                 ('M', r_down), ('L', r_up), ('L', l_up), ('L', l_down), ('L', r_down)
-            ]
+            ],
+            mat=get_element_material(rect_element)
         )
 
         self.paths.append(path_obj)
 
-    def add_path(self, path_element):
-        path_obj = get_path_obj_from_d_path(path_element.getAttribute('d'))
+    def add_path(self, path_element, add_path_to_self=True):
+        paths_and_commands = get_commands_and_points(path_element.getAttribute('d'))
+        mat = get_element_material(path_element)
+        # print(mat)
+        path_obj = Path([], mat=mat)
+        for i in range(len(paths_and_commands)):
+            path_obj.extend(
+                get_cmd_points(paths_and_commands, i)
+            )
 
-        self.paths.append(
-            path_obj.apply_func(self.get_vec)
-        )
+        if add_path_to_self:
+            self.paths.append(path_obj.apply_func(self.get_vec))
+
+        return path_obj
 
     def add_use(self, use_element):
         x = float(use_element.getAttribute('x'))

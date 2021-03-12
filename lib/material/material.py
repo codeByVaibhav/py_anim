@@ -10,7 +10,7 @@ class Material(object):
             self,
             fill: np.ndarray = DARK_BLUE,
             stroke: np.ndarray = DARK_BLUE,
-            stroke_width: int = 2,
+            stroke_width: float = 2,
             stroke_dasharray: np.ndarray = VEC2_ZERO,
             fill_opacity: float = 0.4,
             stroke_opacity: float = 1.0

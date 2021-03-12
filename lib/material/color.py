@@ -74,7 +74,7 @@ LIGHT_PINK = hex_to_rgb("#DC75CD")
 GREEN_SCREEN = hex_to_rgb("#00FF00")
 ORANGE = hex_to_rgb("#FF862F")
 
-ALL_col_hex_to_rgbS = [
+ALL_COLORS = [
     DARK_BLUE,
     DARK_BROWN,
     LIGHT_BROWN,

@@ -18,8 +18,8 @@ class Camera(object):
         self.aspect_ratio = height / width
         self.fov = np.pi / 2
         self.fov_rad = 1.0 / math.tan(self.fov / 2)
-        self.near = 0.0001
-        self.far = 100000
+        self.near = 0.001
+        self.far = 1000000
 
         self.proj_mat = np.array([
             [self.aspect_ratio / self.fov_rad, 0, 0, 0],

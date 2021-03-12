@@ -12,27 +12,26 @@ class Animation(object):
         pass
 
 
-class ShowCreation(Animation):
-    def __init__(self, obj, speed=0.0625):
+class ShowShape(Animation):
+    def __init__(self, shape, speed=0.0625):
         super().__init__()
         self.speed = speed
-        self.obj = obj.copy()
+        self.shape = shape.copy()
 
     def progress(self):
         per = -self.speed
         final_frames = []
-
-        path_objects = self.obj.get_mat_and_paths()
+        paths = self.shape.get_mat_and_paths()
+        path_objects = []
+        for path in paths:
+            path_objects += path.get_subpaths()
 
         alpha = (len(path_objects) - 1) / 50
         while per - alpha <= 1:
             per += self.speed
-
             frame = []
-
             for i, path_obj in enumerate(path_objects):
-                n_per = smooth(per - (i / 50))
-                po = path_obj.lerp(n_per)
+                po = path_obj.lerp(smooth(per - (i / 50)))
                 po.mat.fill_opacity = 0
                 frame.append(po)
 
@@ -40,14 +39,11 @@ class ShowCreation(Animation):
 
         per = -self.speed
         while per <= 1:
-            per += self.speed * 2
-            n_per = smooth(per)
-
+            per += self.speed
             frame = []
-
-            for i, path_obj in enumerate(path_objects):
+            for i, path_obj in enumerate(paths):
                 path_obj = path_obj.copy()
-                path_obj.mat.fill_opacity = lerp(0, path_obj.mat.fill_opacity, n_per)
+                path_obj.mat.fill_opacity = lerp(0, path_obj.mat.fill_opacity, smooth(per))
                 frame.append(path_obj)
 
             final_frames.append(frame)
@@ -57,70 +53,70 @@ class ShowCreation(Animation):
 
 class MorphShape(Animation):
     def __init__(
-        self,
-        start_obj,
-        end_obj,
-        no_of_points=100,
-        speed=0.0625
+            self,
+            start_shape,
+            end_shape,
+            no_of_points=100,
+            speed=0.0625
     ):
         super().__init__()
         self.speed = speed
         self.no_of_points = no_of_points
 
-        self.start_obj = start_obj.copy()
-        self.end_obj = end_obj.copy()
+        self.start_shape = start_shape.copy()
+        self.end_shape = end_shape.copy()
 
     def progress(self):
         per = -self.speed
         final_frames = []
 
-        s_paths = self.start_obj.get_mat_and_paths()
-        e_paths = self.end_obj.get_mat_and_paths()
-        final_frame_paths = self.end_obj.get_mat_and_paths()
+        paths_s = self.start_shape.get_mat_and_paths()
+        paths_e = self.end_shape.get_mat_and_paths()
+        final_frame_paths = self.end_shape.get_mat_and_paths()
+
+        s_paths = []
+        for path in paths_s:
+            s_paths += path.get_subpaths()
+
+        e_paths = []
+        for path in paths_e:
+            e_paths += path.get_subpaths()
 
         # Make the paths of equal lengths
-        if len(s_paths) < len(e_paths):
-            s_paths = s_paths * (len(e_paths) // len(s_paths)) + s_paths[:len(e_paths) % len(s_paths)]
-        elif len(e_paths) < len(s_paths):
-            e_paths = e_paths * (len(s_paths) // len(e_paths)) + e_paths[:len(s_paths) % len(e_paths)]
+        s_paths = s_paths * (len(e_paths) // len(s_paths)) + s_paths[:len(e_paths) % len(s_paths)]
+        e_paths = e_paths * (len(s_paths) // len(e_paths)) + e_paths[:len(s_paths) % len(e_paths)]
         # Make each path of same size
         s_paths = [path.linspace(self.no_of_points) for path in s_paths]
         e_paths = [path.linspace(self.no_of_points) for path in e_paths]
 
         while per <= 1:
             per += self.speed
-            n_per = smooth(per)
-            frame = [s_path.lerp_to_path(e_path, n_per) for s_path, e_path in zip(s_paths, e_paths)]
+            frame = [s_path.lerp_to_path(e_path, smooth(per)) for s_path, e_path in zip(s_paths, e_paths)]
             final_frames.append(frame)
 
         final_frames.append(final_frame_paths)
         return final_frames
 
 
-class RotateFrame(Animation):
-    def __init__(self, axis, angel, frame, speed=0.0625):
+class RotateShape(Animation):
+    def __init__(self, axis, angel, shape, speed=0.0625):
         super().__init__()
         self.axis = axis
         self.angel = angel
-        self.frame = frame
+        self.shape = shape
         self.speed = speed
 
     def progress(self):
         per = -self.speed
         final_frames = []
 
+        paths = self.shape.get_mat_and_paths()
+
         while per <= 1:
             per += self.speed
-            nper = smooth(per)
-            frame = []
-
-            angel_of_rotation = lerp(0, self.angel, nper)
+            angel_of_rotation = lerp(0, self.angel, smooth(per))
             rot = Quaternion(self.axis, angel_of_rotation)
-
-            for mat, path in self.frame:
-                path = [rot.rotate(p) for p in path]
-                frame.append((mat, path))
-
+            frame = [path.apply_func(rot.rotate) for path in paths]
             final_frames.append(frame)
 
         return final_frames
